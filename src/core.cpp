@@ -1,29 +1,27 @@
 /*************************************************************
- * Vector structure -- See header file for more information. *
+ * Entity structure -- See header file for more information. *
  *************************************************************/
 
-#include <math.h>
+#include "core.h"
 
-#include "Vector.h"
-
-namespace Base {
+namespace Sim {
 
 //------------------------------------------------------------------------------
 
-unit Vec2d::length() const
+void Particle::draw()
 {
-	return sqrt(x * x + y * y);
 }
 
 //------------------------------------------------------------------------------
 
-unit Vec2d::angle() const
+std::ostream &operator <<(std::ostream &out, const Particle &p)
 {
-	return atan2(y, x);
+	return out << "P< " << p.x << ", " << p.v
+		<< ", " << p.f << ", " << p.m << " >";
 }
 
 //------------------------------------------------------------------------------
 
-} /* namespace Base */
+} /* namespace Sim */
 
 //------------------------------------------------------------------------------

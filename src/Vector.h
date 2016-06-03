@@ -12,7 +12,7 @@
 #ifndef _VECTOR_H
 #define _VECTOR_H
 
-#include <iostream>
+#include <ostream>
 
 namespace Base {
 
@@ -20,6 +20,8 @@ typedef double unit;
 
 struct Vec2d;
 typedef Vec2d Vec; // Default
+
+const unit Pi = 3.1415926535897932384626433832795L;
 
 //------------------------------------------------------------------------------
 
@@ -87,7 +89,17 @@ struct Vec2d : public Vector<2>
 		{ return Vec2d(-y, x); }
 	bool operator !() // Is zero
 		{ return x == 0.0 && y == 0.0; }
+	unit angle() const;
 };
+
+static inline Vec2d operator +(unit s, const Vec2d &v)
+	{ return Vec2d(s + v.x, s + v.y); }
+static inline Vec2d operator -(unit s, const Vec2d &v)
+	{ return Vec2d(s - v.x, s - v.y); }
+static inline Vec2d operator *(unit s, const Vec2d &v)
+	{ return Vec2d(s * v.x, s * v.y); }
+static inline Vec2d operator /(unit s, const Vec2d &v)
+	{ return Vec2d(s / v.x, s / v.y); }
 
 //------------------------------------------------------------------------------
 // Useful for debugging:
@@ -95,10 +107,10 @@ struct Vec2d : public Vector<2>
 template <int R>
 std::ostream &operator <<(std::ostream &out, const Vector<R> &v)
 {
-	out << "Vec" << R << "d(" << v.data[0];
+	out << '(' << v.data[0];
 	for (int i = 1; i < R; ++i)
 		out << ", " << v.data[i];
-	out << ')';
+	return out << ')';
 }
 
 //------------------------------------------------------------------------------
