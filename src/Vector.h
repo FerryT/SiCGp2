@@ -1,0 +1,110 @@
+/*******************************************************
+ * Vector structure -- header file                     *
+ *                                                     *
+ * Authors: Ferry Timmers                              *
+ *          Henk Alkema                                *
+ *                                                     *
+ * Date: 15:54 3-6-2016                                *
+ *                                                     *
+ * Description: Vector structure and operations        *
+ *******************************************************/
+
+#ifndef _VECTOR_H
+#define _VECTOR_H
+
+#include <iostream>
+
+namespace Base {
+
+typedef double unit;
+
+struct Vec2d;
+typedef Vec2d Vec; // Default
+
+//------------------------------------------------------------------------------
+
+template <int R>
+struct Vector
+{
+	unit data[R];
+	static const int dim = R;
+	
+	unit &operator[] (int i)
+		{ return data[i]; }
+};
+
+//------------------------------------------------------------------------------
+
+struct Vec2d : public Vector<2>
+{
+	unit &x, &y;
+	
+	Vec2d(unit _x = 0, unit _y = 0) : x(data[0]), y(data[1])
+		{ x = _x; y = _y; }
+	Vec2d(const Vec2d &v) : x(data[0]), y(data[1]) // Copy constructor
+		{ x = v.x; y = v.y; }
+	
+	Vec2d operator -() const
+		{ return Vec2d(-x, -y); }
+	Vec2d operator +(unit s) const
+		{ return Vec2d(x + s, y + s); }
+	Vec2d operator +(const Vec2d &v) const
+		{ return Vec2d(x + v.x, y + v.y); }
+	Vec2d operator -(unit s) const
+		{ return Vec2d(x - s, y - s); }
+	Vec2d operator -(const Vec2d &v) const
+		{ return Vec2d(x - v.x, y - v.y); }
+	Vec2d operator *(unit s) const
+		{ return Vec2d(x * s, y * s); }
+	Vec2d operator /(unit s) const
+		{ return Vec2d(x / s, y / s); }
+	
+	Vec2d &operator =(const Vec2d &v)
+		{ x = v.x; y = v.y; return *this; }
+	Vec2d &operator +=(unit s)
+		{ x += s; y += s; return *this; }
+	Vec2d &operator +=(const Vec2d &v)
+		{ x += v.x; y += v.y; return *this; }
+	Vec2d &operator -=(unit s)
+		{ x -= s; y -= s; return *this; }
+	Vec2d &operator -=(const Vec2d &v)
+		{ x -= v.x; y -= v.y; return *this; }
+	Vec2d &operator *=(unit s)
+		{ x *= s; y *= s; return *this; }
+	Vec2d &operator /= (unit s)
+		{ x /= s; y /= s; return *this; }
+	
+	unit length() const;
+	unit length2() const
+		{ return x * x + y * y; }
+	unit operator *(const Vec2d &v) const // Dot product!
+		{ return x * v.x + y * v.y; }
+	Vec2d operator ~() const // Normalize!
+		{ unit l = length(); return Vec2d(x / l, y / l); }
+	Vec2d rotR() const
+		{ return Vec2d(y, -x); }
+	Vec2d rotL() const
+		{ return Vec2d(-y, x); }
+	bool operator !() // Is zero
+		{ return x == 0.0 && y == 0.0; }
+};
+
+//------------------------------------------------------------------------------
+// Useful for debugging:
+
+template <int R>
+std::ostream &operator <<(std::ostream &out, const Vector<R> &v)
+{
+	out << "Vec" << R << "d(" << v.data[0];
+	for (int i = 1; i < R; ++i)
+		out << ", " << v.data[i];
+	out << ')';
+}
+
+//------------------------------------------------------------------------------
+
+} /* namespace Base */
+
+#endif /* _VECTOR_H */
+
+//------------------------------------------------------------------------------
