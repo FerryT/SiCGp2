@@ -10,10 +10,24 @@
 
 #include <stdlib.h>
 
+#include "simulation.h"
+
+using namespace Sim;
+
 //------------------------------------------------------------------------------
+
+Simulation *sim;
 
 int main(int argc, char *argv[])
 {
+	GUI::Init(&argc, argv);
+	{
+		Simulation sim1("Fluid yet rigid");
+		
+		sim = &sim1;
+		GUI::Run([]{ sim->act(); });
+	}
+	getchar();
 	return (EXIT_SUCCESS);
 }
 

@@ -14,7 +14,7 @@
 
 #include <ostream>
 
-#include "Vector.h"
+#include "base.h"
 
 namespace Sim {
 
@@ -35,6 +35,7 @@ class Drawable
 {
 public:
 	virtual void draw() = 0; // Makes Drawable an abstract class
+	virtual ~Drawable() {}
 };
 
 //------------------------------------------------------------------------------
@@ -44,6 +45,7 @@ class Appliable
 {
 public:
 	virtual void apply() = 0;
+	virtual ~Appliable() {}
 };
 
 //------------------------------------------------------------------------------
@@ -61,6 +63,26 @@ public:
 };
 
 std::ostream &operator <<(std::ostream &out, const Particle &);
+
+//------------------------------------------------------------------------------
+
+class ParticleSystem
+{
+public:
+	Particle *particles;
+	const size_t count;
+	
+	ParticleSystem() : count(0), particles((void *) 0) {}
+	ParticleSystem(size_t count);
+	ParticleSystem(const ParticleSystem &);
+	ParticleSystem(ParticleSystem &&);
+	~ParticleSystem();
+	
+	void operator =(const ParticleSystem &) = delete;
+	
+	void copy(const ParticleSystem &);
+	void copyForces(const ParticleSystem &);
+};
 
 //------------------------------------------------------------------------------
 

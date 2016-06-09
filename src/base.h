@@ -9,8 +9,8 @@
  * Description: Vector structure and operations        *
  *******************************************************/
 
-#ifndef _VECTOR_H
-#define _VECTOR_H
+#ifndef _BASE_H
+#define _BASE_H
 
 #include <ostream>
 
@@ -117,6 +117,6 @@ std::ostream &operator <<(std::ostream &out, const Vector<R> &v)
 
 } /* namespace Base */
 
-#endif /* _VECTOR_H */
+#endif /* _BASE_H */
 
 //------------------------------------------------------------------------------

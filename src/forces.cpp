@@ -4,6 +4,8 @@
 
 #include <math.h>
 
+#include "GL/freeglut.h"
+
 #include "forces.h"
 
 namespace Sim {
@@ -14,6 +16,14 @@ using namespace Base;
 
 void Spring::draw()
 {
+	static const double color[3] = {0.6, 0.7, 0.8};
+	
+	glBegin(GL_LINES);
+	glColor3dv(color);
+	glVertex2dv(p1.x.data);
+	glColor3dv(color);
+	glVertex2dv(p2.x.data);
+	glEnd();
 }
 
 //------------------------------------------------------------------------------
@@ -35,6 +45,16 @@ void Spring::apply()
 
 void AngularSpring::draw()
 {
+	static const double color[3] = {0.6, 0.7, 0.8};
+	
+	glBegin(GL_LINES);
+	glColor3dv(color);
+	glVertex2dv(p1.x.data);
+	glColor3dv(color);
+	glVertex2dv(p2.x.data);
+	glColor3dv(color);
+	glVertex2dv(p3.x.data);
+	glEnd();
 }
 
 //------------------------------------------------------------------------------
