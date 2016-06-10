@@ -4,7 +4,7 @@
 
 #include <vector>
 
-#include "simulation.h"
+#include "sim.h"
 
 namespace Sim {
 
@@ -34,18 +34,18 @@ void Simulation::manage(Entity *ent)
 	data->entities.push_back(ent);
 	
 	// Generate new system, every addition, not efficient but care
-	if (dynamic_cast<Particle> (ent))
+	if (dynamic_cast<Particle *> (ent))
 	{
 		ParticleSystem *ps;
 		if (!data->system)
 			ps = new ParticleSystem(1);
 		else
 		{
-			ps = new ParticleSystem(data->system.count + 1);
-			ps->copy(data->system);
-			delete data.system;
+			ps = new ParticleSystem(data->system->count + 1);
+			ps->copy(*data->system);
+			delete data->system;
 		}
-		ps.particles[ps.count - 1] = *dynamic_cast<Particle> (ent);
+		ps->particles[ps->count - 1] = *(dynamic_cast<Particle *> (ent));
 		data->system = ps;
 	}
 }

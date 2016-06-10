@@ -10,7 +10,7 @@
 
 #include <stdlib.h>
 
-#include "simulation.h"
+#include "sim.h"
 
 using namespace Sim;
 

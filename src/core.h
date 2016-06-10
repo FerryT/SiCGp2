@@ -72,7 +72,7 @@ public:
 	Particle *particles;
 	const size_t count;
 	
-	ParticleSystem() : count(0), particles((void *) 0) {}
+	ParticleSystem() : count(0), particles((Particle *) 0) {}
 	ParticleSystem(size_t count);
 	ParticleSystem(const ParticleSystem &);
 	ParticleSystem(ParticleSystem &&);

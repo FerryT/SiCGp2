@@ -22,7 +22,7 @@ using namespace Base;
 
 //------------------------------------------------------------------------------
 // All inline on purpose
-
+/*
 class Integrator
 {
 	Integrator(unit _h) : h(_h) {}
@@ -41,7 +41,7 @@ class Euler : public Integrator
 		p.v += h * p.f / p.m;
 	}
 };
-
+*/
 //------------------------------------------------------------------------------
 
 } /* namespace Sim */
