@@ -12,6 +12,7 @@
 #ifndef _CORE_H
 #define _CORE_H
 
+#include <vector>
 #include <ostream>
 
 #include "base.h"
@@ -50,38 +51,41 @@ public:
 
 //------------------------------------------------------------------------------
 
-class Particle : public virtual Entity, public virtual Drawable
+class ParticleBase : public virtual Entity, public virtual Drawable
+{
+public:
+	Vec *x, *v, *f;
+	unit *m;
+	
+	ParticleBase(Vec *_x = 0, Vec *_v = 0, Vec *_f = 0, unit *_m = 0) :
+		x(_x), v(_v), f(_f), m(_m) {}
+	
+	virtual void draw();
+};
+
+std::ostream &operator <<(std::ostream &out, const ParticleBase &);
+
+//------------------------------------------------------------------------------
+
+class Particle : private ParticleBase
 {
 public:
 	Vec x, v, f;
 	unit m;
 	
 	Particle(Vec _x = Vec(), Vec _v = Vec(), Vec _f = Vec(), unit _m = 0.0) :
-		x(_x), v(_v), f(_f), m(_m) {}
-	
-	virtual void draw();
+		ParticleBase(&x, &v, &f, &m), x(_x), v(_v), f(_f), m(_m) {}
 };
-
-std::ostream &operator <<(std::ostream &out, const Particle &);
 
 //------------------------------------------------------------------------------
 
-class ParticleSystem
+typedef std::vector<Vec> Vecs;
+typedef std::vector<unit> units;
+
+struct ParticleSystem
 {
-public:
-	Particle *particles;
-	const size_t count;
-	
-	ParticleSystem() : count(0), particles((Particle *) 0) {}
-	ParticleSystem(size_t count);
-	ParticleSystem(const ParticleSystem &);
-	ParticleSystem(ParticleSystem &&);
-	~ParticleSystem();
-	
-	void operator =(const ParticleSystem &) = delete;
-	
-	void copy(const ParticleSystem &);
-	void copyForces(const ParticleSystem &);
+	Vecs x, v, f;
+	units m;
 };
 
 //------------------------------------------------------------------------------

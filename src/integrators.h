@@ -15,18 +15,20 @@
 
 #include "base.h"
 #include "core.h"
+#include "sim.h"
 
 namespace Sim {
 
 using namespace Base;
 
 //------------------------------------------------------------------------------
-// All inline on purpose
-/*
+
 class Integrator
 {
+public:
 	Integrator(unit _h) : h(_h) {}
-	void integrate(Particle &) = 0;
+	virtual ~Integrator() {}
+	virtual void integrate(Simulation &_sim) = 0;
 
 protected:
 	unit h;
@@ -35,13 +37,21 @@ protected:
 class Euler : public Integrator
 {
 	Euler(unit h) : Integrator(h) {}
-	void integrate(Particle &p)
-	{
-		p.x += h * p.v;
-		p.v += h * p.f / p.m;
-	}
+	void integrate(Simulation &_sim);
 };
-*/
+
+class Midpoint : public Integrator
+{
+	Midpoint(unit h) : Integrator(h) {}
+	void integrate(Simulation &_sim);
+};
+
+class RungeKutta4 : public Integrator
+{
+	RungeKutta4(unit h) : Integrator(h) {}
+	void integrate(Simulation &_sim);
+};
+
 //------------------------------------------------------------------------------
 
 } /* namespace Sim */

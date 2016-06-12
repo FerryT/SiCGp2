@@ -23,18 +23,30 @@ namespace Sim {
 class Simulation : public GUI::Window
 {
 public:
+	const ParticleSystem &system;
+	
 	Simulation(const char *title);
 	~Simulation();
 	
 	template <class T, typename... A> inline T *create(A... args)
 		{ T *ptr = new T(args...); manage(ptr); return ptr; }
+	template <typename... A> inline ParticleBase *create(A... args)
+		{ Particle p(args...); return manage(p); }
 	void clear();
 	
 	void act();
 
+protected:
+	void calcForces();
+	void setForces(const Vecs &);
+	void saveState();
+	void restoreState();
+
 private:
 	void draw();
 	void manage(Entity *);
+	ParticleBase *manage(const Particle &);
+	void update_pointers();
 	struct Data;
 	Data *data;
 };
