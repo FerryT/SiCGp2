@@ -13,18 +13,20 @@
 #define _SIM_H
 
 #include "gui.h"
+#include "base.h"
 #include "core.h"
 #include "forces.h"
+#include "integrators.h"
 
 namespace Sim {
+
+class Integrator;
 
 //------------------------------------------------------------------------------
 
 class Simulation : public GUI::Window
 {
 public:
-	const ParticleSystem &system;
-	
 	Simulation(const char *title);
 	~Simulation();
 	
@@ -34,11 +36,15 @@ public:
 		{ Particle p(args...); return manage(p); }
 	void clear();
 	
-	void act();
+	void act(Integrator &, unit h);
+	
+	friend class Euler;
+	friend class MidPoint;
+	friend class RungeKutta4;
 
 protected:
+	ParticleSystem &system;
 	void calcForces();
-	void setForces(const Vecs &);
 	void saveState();
 	void restoreState();
 

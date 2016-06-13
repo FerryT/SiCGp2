@@ -21,35 +21,54 @@ namespace Sim {
 
 using namespace Base;
 
+class Simulation;
+
 //------------------------------------------------------------------------------
 
 class Integrator
 {
 public:
-	Integrator(unit _h) : h(_h) {}
+	Integrator(Simulation &_sim) : sim(_sim) {}
 	virtual ~Integrator() {}
-	virtual void integrate(Simulation &_sim) = 0;
+	virtual void integrate(unit h) = 0;
 
 protected:
-	unit h;
+	Simulation &sim;
 };
+
+//------------------------------------------------------------------------------
 
 class Euler : public Integrator
 {
-	Euler(unit h) : Integrator(h) {}
-	void integrate(Simulation &_sim);
+public:
+	Euler(Simulation &sim) : Integrator(sim) {}
+	void integrate(unit);
 };
 
-class Midpoint : public Integrator
+//------------------------------------------------------------------------------
+
+class MidPoint : public Integrator
 {
-	Midpoint(unit h) : Integrator(h) {}
-	void integrate(Simulation &_sim);
+public:
+	MidPoint(Simulation &sim, Integrator &intg)
+		: Integrator(sim), subint(&intg) {}
+	void integrate(unit h);
+
+private:
+	Integrator *subint;
 };
+
+//------------------------------------------------------------------------------
 
 class RungeKutta4 : public Integrator
 {
-	RungeKutta4(unit h) : Integrator(h) {}
-	void integrate(Simulation &_sim);
+public:
+	RungeKutta4(Simulation &sim, Integrator &intg)
+		: Integrator(sim), subint(&intg) {}
+	void integrate(unit h);
+	
+private:
+	Integrator *subint;
 };
 
 //------------------------------------------------------------------------------

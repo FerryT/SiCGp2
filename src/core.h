@@ -12,6 +12,7 @@
 #ifndef _CORE_H
 #define _CORE_H
 
+#include <stdlib.h>
 #include <vector>
 #include <ostream>
 
@@ -86,6 +87,8 @@ struct ParticleSystem
 {
 	Vecs x, v, f;
 	units m;
+	size_t size;
+	ParticleSystem() : x(), v(), f(), m(), size(0) {}
 };
 
 //------------------------------------------------------------------------------

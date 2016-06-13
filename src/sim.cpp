@@ -42,6 +42,7 @@ ParticleBase *Simulation::manage(const Particle &p)
 	data->system.v.push_back(p.v);
 	data->system.f.push_back(p.f);
 	data->system.m.push_back(p.m);
+	++data->system.size;
 	ParticleBase *pb = new ParticleBase();
 	data->entities.push_back(pb);
 	update_pointers();
@@ -79,14 +80,6 @@ void Simulation::calcForces()
 			dynamic_cast<Appliable *> (ent)->apply();
 }
 
-void Simulation::setForces(const Vecs &forces)
-{
-	// Assumption: the length of forces is equal to system.f
-	// if not things will break quite horribly
-	data->system.f = forces;
-	auto f = system.f.begin();
-}
-
 void Simulation::saveState()
 {
 	data->cache.x = data->system.x;
@@ -121,8 +114,10 @@ void Simulation::draw()
 
 //------------------------------------------------------------------------------
 
-void Simulation::act()
+void Simulation::act(Integrator &intg, unit h)
 {
+	calcForces();
+	intg.integrate(h);
 }
 
 //------------------------------------------------------------------------------

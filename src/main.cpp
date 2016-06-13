@@ -17,15 +17,18 @@ using namespace Sim;
 //------------------------------------------------------------------------------
 
 Simulation *sim;
+Integrator *intg;
 
 int main(int argc, char *argv[])
 {
 	GUI::Init(&argc, argv);
 	{
 		Simulation sim1("Fluid yet rigid");
+		Euler int1(sim1);
 		
 		sim = &sim1;
-		GUI::Run([]{ sim->act(); });
+		intg = &int1;
+		GUI::Run([]{ sim->act(*intg, 0.01); });
 	}
 	getchar();
 	return (EXIT_SUCCESS);
