@@ -14,7 +14,7 @@
 
 #include <stdlib.h>
 #include <vector>
-#include <ostream>
+#include <iostream>
 
 #include "base.h"
 
@@ -52,7 +52,7 @@ public:
 
 //------------------------------------------------------------------------------
 
-class ParticleBase : public virtual Entity, public virtual Drawable
+class ParticleBase : public Entity, public virtual Drawable
 {
 public:
 	Vec *x, *v, *f;
@@ -74,7 +74,7 @@ public:
 	Vec x, v, f;
 	unit m;
 	
-	Particle(Vec _x = Vec(), Vec _v = Vec(), Vec _f = Vec(), unit _m = 0.0) :
+	Particle(Vec _x = Vec(), Vec _v = Vec(), Vec _f = Vec(), unit _m = 1.0) :
 		ParticleBase(&x, &v, &f, &m), x(_x), v(_v), f(_f), m(_m) {}
 };
 

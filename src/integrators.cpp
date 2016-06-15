@@ -10,50 +10,50 @@ namespace Sim {
 
 void Euler::integrate(unit h)
 {
-	for (size_t i = 0; i < sim.system.size; ++i)
+	for (size_t i = 0; i < system.size; ++i)
 	{
-		sim.system.x[i] += sim.system.v[i] * h;
-		sim.system.v[i] += sim.system.f[i] * h / sim.system.m[i];
+		system.x[i] += h * system.v[i];
+		system.v[i] += h * system.f[i] / system.m[i];
 	}
 }
 
 //------------------------------------------------------------------------------
 
-void MidPoint::integrate(unit h)
+void MidPointBase::integrate(unit h)
 {
-	sim.saveState();
+	saveState();
 	subint->integrate(h / 2.0);
-	sim.calcForces();
-	sim.restoreState();
+	calcForces();
+	restoreState();
 	subint->integrate(h);
 }
 
 //------------------------------------------------------------------------------
 
-void RungeKutta4::integrate(unit h)
+void RungeKutta4Base::integrate(unit h)
 {
-	Vecs k1 = sim.system.f;
+	Vecs k1 = system.f;
 	
-	sim.saveState();
+	saveState();
 	subint->integrate(h / 2.0);
-	sim.calcForces();
-	sim.restoreState();
-	Vecs k2 = sim.system.f;
+	calcForces();
+	restoreState();
+	Vecs k2 = system.f;
 	
-	sim.saveState();
+	saveState();
 	subint->integrate(h / 2.0);
-	sim.calcForces();
-	sim.restoreState();
-	Vecs k3 = sim.system.f;
+	calcForces();
+	restoreState();
+	Vecs k3 = system.f;
 	
-	sim.saveState();
+	saveState();
 	subint->integrate(h);
-	sim.calcForces();
-	sim.restoreState();
-	Vecs k4 = sim.system.f;
+	calcForces();
+	restoreState();
+	Vecs k4 = system.f;
 	
-	for (size_t i = sim.system.size - 1; i >= 0; --i)
-		sim.system.f[i] = k1[i]/6 + k2[i]/3 + k3[i]/3 + k4[i]/6;
+	for (size_t i = system.size - 1; i >= 0; --i)
+		system.f[i] = k1[i]/6 + k2[i]/3 + k3[i]/3 + k4[i]/6;
 	
 	subint->integrate(h);
 }

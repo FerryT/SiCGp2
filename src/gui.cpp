@@ -243,9 +243,23 @@ void Init(int *argc, char *argv[])
 	glutInit(argc, argv);
 }
 
-void Run(LoopCallback callback)
+//------------------------------------------------------------------------------
+
+LoopCallback callback = NULL;
+
+void idle_func()
 {
-	glutIdleFunc(callback);
+	if (!callback)
+		return;
+		
+	callback();
+	glutPostRedisplay();	
+}
+
+void Run(LoopCallback cb)
+{
+	callback = cb;
+	glutIdleFunc(idle_func);
 	glutMainLoop();
 }
 

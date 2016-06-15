@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "sim.h"
+#include "integrators.h"
 
 namespace Sim {
 
@@ -14,6 +15,7 @@ namespace Sim {
 struct Simulation::Data
 {
 	std::vector<Entity *> entities;
+	std::vector<ParticleBase *>particles;
 	ParticleSystem system;
 	ParticleSystem cache;
 };
@@ -21,8 +23,9 @@ struct Simulation::Data
 //------------------------------------------------------------------------------
 
 Simulation::Simulation(const char *title)
-	: Window(title), data(new Data), system(data->system)
+	: Window(title), data(new Data)
 {
+	data->particles.push_back(NULL);
 }
 
 Simulation::~Simulation()
@@ -45,30 +48,33 @@ ParticleBase *Simulation::manage(const Particle &p)
 	++data->system.size;
 	ParticleBase *pb = new ParticleBase();
 	data->entities.push_back(pb);
+	data->particles.back() = pb;
+	data->particles.push_back(NULL);
 	update_pointers();
 	return pb;
 }
 
 void Simulation::update_pointers()
 {
-	auto x = data->system.x.begin();
-	auto v = data->system.v.begin();
-	auto f = data->system.f.begin();
-	auto m = data->system.m.begin();
-	for (Entity *ent : data->entities)
+	auto x = data->system.x.data();
+	auto v = data->system.v.data();
+	auto f = data->system.f.data();
+	auto m = data->system.m.data();
+	for (size_t i = 0; i < data->particles.size() - 1; ++i)
 	{
-		ParticleBase *pb = dynamic_cast<ParticleBase *> (ent);
-		if (pb)
-		{
-			pb->x = &*x++;
-			pb->v = &*v++;
-			pb->f = &*f++;
-			pb->m = &*m++;
-		}
+		data->particles[i]->x = &x[i];
+		data->particles[i]->v = &v[i];
+		data->particles[i]->f = &f[i];
+		data->particles[i]->m = &m[i];
 	}
 }
 
 //------------------------------------------------------------------------------
+
+ParticleSystem &Simulation::getSystem()
+{
+	return data->system;
+}
 
 void Simulation::calcForces()
 {
@@ -90,6 +96,7 @@ void Simulation::restoreState()
 {
 	data->system.x = data->cache.x;
 	data->system.v = data->cache.v;
+	update_pointers();
 }
 
 //------------------------------------------------------------------------------
@@ -99,6 +106,8 @@ void Simulation::clear()
 	for (Entity *ent : data->entities)
 		delete ent;
 	data->entities.clear();
+	data->particles.clear();
+	data->particles.push_back(NULL);
 	data->system = ParticleSystem();
 	data->cache = ParticleSystem();
 }
@@ -118,6 +127,13 @@ void Simulation::act(Integrator &intg, unit h)
 {
 	calcForces();
 	intg.integrate(h);
+}
+
+//------------------------------------------------------------------------------
+
+ParticleBase **Simulation::getParticles()
+{
+	return data->particles.data();
 }
 
 //------------------------------------------------------------------------------

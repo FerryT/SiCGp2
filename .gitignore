@@ -1,6 +1,8 @@
 *.o
 *.exe
 *.dll
+Project2
+*.log
 
 *.win
 *.layout

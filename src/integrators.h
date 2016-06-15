@@ -21,19 +21,22 @@ namespace Sim {
 
 using namespace Base;
 
-class Simulation;
-
 //------------------------------------------------------------------------------
 
 class Integrator
 {
 public:
-	Integrator(Simulation &_sim) : sim(_sim) {}
+	Integrator(Simulation &_sim) : sim(_sim), system(_sim.getSystem()) {}
 	virtual ~Integrator() {}
 	virtual void integrate(unit h) = 0;
 
 protected:
 	Simulation &sim;
+	ParticleSystem &system;
+	
+	void saveState() { sim.saveState(); }
+	void restoreState() { sim.restoreState(); }
+	void calcForces() { sim.calcForces(); }
 };
 
 //------------------------------------------------------------------------------
@@ -47,28 +50,40 @@ public:
 
 //------------------------------------------------------------------------------
 
-class MidPoint : public Integrator
+class MidPointBase : public Integrator
 {
 public:
-	MidPoint(Simulation &sim, Integrator &intg)
-		: Integrator(sim), subint(&intg) {}
+	MidPointBase(Simulation &sim, Integrator *i) : Integrator(sim), subint(i) {}
+	virtual ~MidPointBase() {}
 	void integrate(unit h);
-
-private:
+protected:
 	Integrator *subint;
+};
+
+template <class I> class MidPoint : public MidPointBase
+{
+public:
+	MidPoint(Simulation &sim) : MidPointBase(sim, new I(sim)) {}
+	~MidPoint() { delete subint; }
 };
 
 //------------------------------------------------------------------------------
 
-class RungeKutta4 : public Integrator
+class RungeKutta4Base : public Integrator
 {
 public:
-	RungeKutta4(Simulation &sim, Integrator &intg)
-		: Integrator(sim), subint(&intg) {}
+	RungeKutta4Base(Simulation &sim, Integrator *i) : Integrator(sim), subint(i) {}
+	virtual ~RungeKutta4Base() {}
 	void integrate(unit h);
-	
-private:
+protected:
 	Integrator *subint;
+};
+
+template <class I> class RungeKutta4 : public RungeKutta4Base
+{
+public:
+	RungeKutta4(Simulation &sim) : RungeKutta4Base(sim, new I(sim)) {}
+	~RungeKutta4() { delete subint; }
 };
 
 //------------------------------------------------------------------------------

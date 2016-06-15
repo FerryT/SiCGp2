@@ -12,7 +12,7 @@ namespace Sim {
 
 void ParticleBase::draw()
 {
-	static const double h = 0.015;
+	static const double h = 0.005;
 	static const double white[3] = {1.0, 1.0, 1.0};
 	
 	glColor3dv(white);

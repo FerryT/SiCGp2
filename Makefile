@@ -8,6 +8,11 @@ BIN  = Project2.exe
 CXXFLAGS = $(INCS) -fexpensive-optimizations -O3 -std=c++11
 RM = rm -f
 
+ifeq ($(shell uname -s),Linux)
+	LIBS = -lglut -lGL -lGLU
+	BIN = Project2
+endif
+
 .PHONY: all clean
 
 all: $(BIN)

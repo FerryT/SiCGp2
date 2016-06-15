@@ -16,7 +16,6 @@
 #include "base.h"
 #include "core.h"
 #include "forces.h"
-#include "integrators.h"
 
 namespace Sim {
 
@@ -32,18 +31,17 @@ public:
 	
 	template <class T, typename... A> inline T *create(A... args)
 		{ T *ptr = new T(args...); manage(ptr); return ptr; }
-	template <typename... A> inline ParticleBase *create(A... args)
-		{ Particle p(args...); return manage(p); }
+	template <typename... A>inline ParticleBase *addParticle(A... args)
+		{ return manage(Particle(args...)); }
 	void clear();
 	
-	void act(Integrator &, unit h);
+	friend class Integrator;
+	virtual void act(Integrator &, unit h);
 	
-	friend class Euler;
-	friend class MidPoint;
-	friend class RungeKutta4;
+	ParticleBase **getParticles();
 
 protected:
-	ParticleSystem &system;
+	ParticleSystem &getSystem();
 	void calcForces();
 	void saveState();
 	void restoreState();

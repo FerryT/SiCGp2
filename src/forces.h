@@ -14,14 +14,17 @@
 #define _FORCES_H
 
 #include "core.h"
+#include "sim.h"
 
 namespace Sim {
 
 using namespace Base;
 
+class Simulation;
+
 //------------------------------------------------------------------------------
 
-class Force : public virtual Drawable, public virtual Appliable
+class Force : public Entity, public virtual Drawable, public virtual Appliable
 {
 public:
 	virtual void draw() {}
@@ -33,7 +36,14 @@ public:
 class Gravity : public Force
 {
 public:
+	Simulation *sim;
+	Vec g, origin;
 	
+	Gravity(Simulation *_sim, Vec _g, Vec _origin = Vec(.5,.5))
+		: sim(_sim), g(_g), origin(_origin) {}
+	
+	void draw();
+	void apply();
 };
 
 //------------------------------------------------------------------------------
@@ -41,11 +51,11 @@ public:
 class Spring : public Force
 {
 public:
-	Particle &p1, &p2;
+	ParticleBase *p1, *p2;
 	unit rest;
 	const unit &ks, &kd;
 	
-	Spring(Particle &_p1, Particle &_p2, unit _rest, const unit &_ks,
+	Spring(ParticleBase *_p1, ParticleBase *_p2, unit _rest, const unit &_ks,
 		const unit &_kd) : p1(_p1), p2(_p2), rest(_rest), ks(_ks), kd(_kd) {}
 	
 	void draw();
@@ -57,13 +67,13 @@ public:
 class AngularSpring : public Force
 {
 public:
-	Particle &p1, &p2, &p3;
+	ParticleBase *p1, *p2, *p3;
 	unit angle;
 	const unit &ks;
 	
-	AngularSpring(Particle &_p1, Particle &_p2, Particle &_p3, unit _angle,
-		const unit &_ks) : p1(_p1), p2(_p2), p3(_p3), angle(_angle), ks(_ks),
-		old(Pi / 2) {}
+	AngularSpring(ParticleBase *_p1, ParticleBase *_p2, ParticleBase *_p3,
+		unit _angle, const unit &_ks)
+		: p1(_p1), p2(_p2), p3(_p3), angle(_angle), ks(_ks), old(Pi / 2) {}
 	
 	virtual void draw();
 	virtual void apply();
