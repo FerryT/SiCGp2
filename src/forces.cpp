@@ -50,7 +50,9 @@ void Gravity::apply()
 
 void Spring::draw()
 {
-	static const double color[3] = {0.6, 0.7, 0.8};
+	unit l = fabs((*p1->x - *p2->x).length() - rest);
+	const double color[3] = {0.6 + l, 0.7, 0.8 - l};
+	
 	glBegin(GL_LINES);
 	glColor3dv(color);
 	glVertex2dv(p1->x->data);
@@ -111,6 +113,21 @@ void AngularSpring::apply()
 	*p1->f += f1;
 	*p2->f -= (f1 + f3);
 	*p3->f += f3;
+}
+
+//------------------------------------------------------------------------------
+
+void Glue::draw()
+{
+}
+
+//------------------------------------------------------------------------------
+
+void Glue::apply()
+{
+	*p->x = x;
+	*p->v = Vec();
+	*p->f = Vec();
 }
 
 //------------------------------------------------------------------------------

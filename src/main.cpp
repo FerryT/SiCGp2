@@ -25,22 +25,35 @@ class Main : public Simulation
 {
 public:
 	Integrator *integrator = NULL;
-	unit dt = 0.01;
+	unit dt = 0.001;
 	
 	Fluid *fluid;
+	Entity *selected = NULL;
 	
 	Main(const char *title);
+	
 	void reset();
+	void preact();
+	void postact();
 	
 	void keypress(unsigned char key);
 	void mouseup(const GUI::MouseEvent &);
+	void mousedown(const GUI::MouseEvent &);
+	void mousemove(const GUI::MouseEvent &);
+	
+	inline Vec getMouse();
 	
 	static Main *instance;
 	static void Frame()
 	{
+		instance->preact();
 		if (instance->integrator)
 			instance->act(*(instance->integrator), instance->dt);
+		instance->postact();
 	}
+
+private:
+	struct { int x, y; bool down; } mouse;
 };
 
 Main *Main::instance = NULL;
@@ -53,6 +66,9 @@ int main(int argc, char *argv[])
 	{
 		Main sim("Fluid yet rigid");
 		Verlet verlet(sim);
+		Euler euler(sim);
+		MidPoint<Verlet> midpoint(sim);
+		RungeKutta4< RungeKutta4<Verlet> > superrunge(sim);
 		sim.integrator = &verlet;
 		
 		GUI::Run(Main::Frame);
@@ -82,11 +98,14 @@ void createCloth(Simulation *sim, unit x, unit y, unit w, unit h, int rx, int ry
 	for (int j = 0; j < ry-1; ++j)
 		for (int i = 0; i < rx; ++i)
 			sim->create<Spring>(grid[i][j], grid[i][j+1], dy, ks, kd);
+	
+	sim->create<Glue>(grid[0][ry-1], *grid[0][ry-1]->x);
+	sim->create<Glue>(grid[rx-1][ry-1], *grid[rx-1][ry-1]->x);
 }
 
 //------------------------------------------------------------------------------
 
-Main::Main(const char *title) : Simulation(title)
+Main::Main(const char *title) : Simulation(title), mouse({0,0, false})
 {
 	Main::instance = this;
 	reset();
@@ -99,10 +118,31 @@ void Main::reset()
 	clear();
 	
 	Vec G(0, -0.05);
-	
-	fluid = create<Fluid>(this, 100, 100, 0.05, 0.000001, G * 50.0);
-	createCloth(this, 0.25, 0.25, .5, .5, 4, 4, 1, 1);
+	fluid = create<Fluid>(this, 20, 20, 0.0001, 0.000001, G * 50.0);
+	createCloth(this, 0.25, 0.5, .5, .5, 30, 30, -1000, -100);
 	create<Gravity>(this, G, 0.0);
+}
+
+//------------------------------------------------------------------------------
+
+void Main::preact()
+{
+}
+
+//------------------------------------------------------------------------------
+
+void Main::postact()
+{
+	if (selected)
+	{
+		ParticleBase *pb = dynamic_cast<ParticleBase *> (selected);
+		if (pb)
+		{
+			*pb->x = getMouse();
+			*pb->v = Vec();
+			*pb->f = Vec();
+		}
+	}
 }
 
 //------------------------------------------------------------------------------
@@ -125,8 +165,43 @@ void Main::keypress(unsigned char key)
 
 //------------------------------------------------------------------------------
 
-void Main::mouseup(const GUI::MouseEvent &event)
+void Main::mousemove(const GUI::MouseEvent &event)
 {
+	mouse.x = event.x;
+	mouse.y = event.y;
+}
+
+void Main::mouseup(const GUI::MouseEvent &)
+{
+	mouse.down = false;
+	selected = NULL;
+}
+
+void Main::mousedown(const GUI::MouseEvent &event)
+{
+	mouse.x = event.x;
+	mouse.y = event.y;
+	mouse.down = true;
+	
+	Vec m = getMouse();
+	unit min = 1.0 / 0.0;
+	selected = NULL;
+	for (ParticleBase **pb = getParticles(); *pb; ++pb)
+	{
+		unit l = (*(**pb).x - m).length();
+		if (l < min)
+		{
+			min = l;
+			selected = *pb;
+		}
+	}
+}
+
+inline Vec Main::getMouse()
+{
+	unit x = ((bounds.right - bounds.left) / (unit) width) * (unit) mouse.x;
+	unit y = ((bounds.bottom - bounds.top) / (unit) height) * (unit) mouse.y;
+	return Vec(bounds.left + x, bounds.bottom - y);
 }
 
 //------------------------------------------------------------------------------

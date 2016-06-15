@@ -64,7 +64,7 @@ void RungeKutta4Base::integrate(unit h)
 	restoreState();
 	Vecs k4 = system.f;
 	
-	for (size_t i = system.size - 1; i >= 0; --i)
+	for (size_t i = 0; i < system.size; ++i)
 		system.f[i] = k1[i]/6 + k2[i]/3 + k3[i]/3 + k4[i]/6;
 	
 	subint->integrate(h);

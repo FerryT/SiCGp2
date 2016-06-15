@@ -53,7 +53,7 @@ class Spring : public Force
 public:
 	ParticleBase *p1, *p2;
 	unit rest;
-	const unit &ks, &kd;
+	const unit ks, kd;
 	
 	Spring(ParticleBase *_p1, ParticleBase *_p2, unit _rest, const unit &_ks,
 		const unit &_kd) : p1(_p1), p2(_p2), rest(_rest), ks(_ks), kd(_kd) {}
@@ -69,7 +69,7 @@ class AngularSpring : public Force
 public:
 	ParticleBase *p1, *p2, *p3;
 	unit angle;
-	const unit &ks;
+	const unit ks;
 	
 	AngularSpring(ParticleBase *_p1, ParticleBase *_p2, ParticleBase *_p3,
 		unit _angle, const unit &_ks)
@@ -80,6 +80,20 @@ public:
 
 private:
 	unit old;
+};
+
+//------------------------------------------------------------------------------
+
+class Glue : public Force
+{
+public:
+	ParticleBase *p;
+	Vec x;
+	
+	Glue(ParticleBase *_p, Vec _x) : p(_p), x(_x) {}
+	
+	virtual void draw();
+	virtual void apply();
 };
 
 //------------------------------------------------------------------------------

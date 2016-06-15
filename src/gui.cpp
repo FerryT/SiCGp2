@@ -74,7 +74,7 @@ void Window::mouse_func(int button, int state, int x, int y)
 {
 	Window *win = current_window();
 	if (!win) return;
-	auto last = win->buttons[button];
+	auto &last = win->buttons[button];
 	
 	if (state == GLUT_DOWN)
 	{
@@ -103,7 +103,7 @@ void Window::motion_func(int x, int y)
 		if (win->buttons[i].state == GLUT_DOWN)
 			buttons |= to_button(i);
 	
-	MouseEvent e = {x, y, to_button(buttons)};
+	MouseEvent e = {x, y, (MouseEvent::Button) buttons};
 	win->mousemove(e);
 }
 
@@ -122,6 +122,7 @@ void Window::display_func()
 Window::Window(const char *title)
 	: bounds(bounds_v), x(*this), y(*this), width(*this), height(*this),
 	bounds_v({0.0, 1.0, 0.0, 1.0}),
+	buttons({{GLUT_UP,0,0},{GLUT_UP,0,0},{GLUT_UP,0,0},{GLUT_UP,0,0},{GLUT_UP,0,0}}),
 	cache({0, 0, default_width, default_height,
 		(float) default_width / (float) default_height})
 {

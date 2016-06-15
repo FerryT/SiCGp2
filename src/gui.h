@@ -66,7 +66,7 @@ public:
 
 private:
 	int id;
-	static const int buttoncount = 3;
+	static const int buttoncount = 5;
 	struct { int state, x, y; } buttons[buttoncount];
 	struct { int x, y, width, height; float ratio; } cache;
 	Rect bounds_v;
