@@ -27,6 +27,13 @@ Fluid::Fluid(Simulation *s, int w, int h, unit V, unit D, Vec G)
 	v_old = new unit[size];
 	d     = new unit[size];
 	d_old = new unit[size];
+
+	std::fill(u, u + size, 0.0);
+	std::fill(u_old, u_old + size, 0.0);
+	std::fill(v, v + size, 0.0);
+	std::fill(v_old, v_old + size, 0.0);
+	std::fill(d, d + size, 0.0);
+	std::fill(d_old, d_old + size, 0.0);
 }
 
 Fluid::~Fluid()
@@ -79,10 +86,17 @@ void Fluid::act(unit dt)
 	// Reset, apply gravity
 	for (int i = 0; i < size; ++i)
 	{
-		u_old[i] = g.x;
-		v_old[i] = g.y;
+		u_old[i] = 0.0;
+		v_old[i] = 0.0;
 		d_old[i] = 0.0;
 	}
+	FOR_EACH_CELL(i, j)
+		if (i > 1 && i < width - 1 && j > 1 && j < height - 1)
+		{
+			u_old[IX(i, j)] = g.x * d[IX(i, j)] * 1.0;
+			v_old[IX(i, j)] = g.y * d[IX(i, j)] * 1.0;
+		}
+	END_FOR
 	// Debug:
 	u_old[IX(width/2 + 1, height - 5)] = 500.0;
 	v_old[IX(width/2 + 1, height - 5)] = 0.0;
