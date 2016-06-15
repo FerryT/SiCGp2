@@ -69,7 +69,7 @@ void Spring::apply()
 		return;
 	
 	unit l = x.length();
-	Vec f = (ks * (l - rest) + kd * (v * x) / l) * x / l;
+	Vec f = ((ks * (l - rest)) + (kd * (v * x) / l)) * (x / l);
 	
 	*p1->f += f;
 	*p2->f -= f;

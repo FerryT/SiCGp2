@@ -11,8 +11,11 @@
 #include <stdlib.h>
 #include <map>
 
+#include "GL/freeglut.h"
+
 #include "sim.h"
 #include "integrators.h"
+#include "fluid.h"
 
 using namespace Sim;
 
@@ -22,9 +25,12 @@ class Main : public Simulation
 {
 public:
 	Integrator *integrator = NULL;
-	unit dt = 0.0001;
+	unit dt = 0.01;
+	
+	Fluid *fluid;
 	
 	Main(const char *title);
+	void reset();
 	
 	void keypress(unsigned char key);
 	void mouseup(const GUI::MouseEvent &);
@@ -46,9 +52,8 @@ int main(int argc, char *argv[])
 	GUI::Init(&argc, argv);
 	{
 		Main sim("Fluid yet rigid");
-		RungeKutta4<Euler> runge(sim);
-		Euler euler(sim);
-		sim.integrator = &euler;
+		Verlet verlet(sim);
+		sim.integrator = &verlet;
 		
 		GUI::Run(Main::Frame);
 	}
@@ -58,7 +63,7 @@ int main(int argc, char *argv[])
 
 //------------------------------------------------------------------------------
 
-void createCloth(Simulation &sim, unit x, unit y, unit w, unit h, int rx, int ry,
+void createCloth(Simulation *sim, unit x, unit y, unit w, unit h, int rx, int ry,
 	unit ks, unit kd)
 {
 	std::map< int, std::map<int,ParticleBase *> > grid;
@@ -68,15 +73,15 @@ void createCloth(Simulation &sim, unit x, unit y, unit w, unit h, int rx, int ry
 	
 	for (int i = 0; i < rx; ++i)
 		for (int j = 0; j < ry; ++j)
-			grid[i][j] = sim.addParticle(Vec(x + (i * dx), y + (j * dy)));
+			grid[i][j] = sim->addParticle(Vec(x + (i * dx), y + (j * dy)));
 	
 	for (int i = 0; i < rx-1; ++i)
 		for (int j = 0; j < ry; ++j)
-			sim.create<Spring>(grid[i][j], grid[i+1][j], dx, ks, kd);
+			sim->create<Spring>(grid[i][j], grid[i+1][j], dx, ks, kd);
 	
 	for (int j = 0; j < ry-1; ++j)
 		for (int i = 0; i < rx; ++i)
-			sim.create<Spring>(grid[i][j], grid[i][j+1], dy, ks, kd);
+			sim->create<Spring>(grid[i][j], grid[i][j+1], dy, ks, kd);
 }
 
 //------------------------------------------------------------------------------
@@ -84,8 +89,20 @@ void createCloth(Simulation &sim, unit x, unit y, unit w, unit h, int rx, int ry
 Main::Main(const char *title) : Simulation(title)
 {
 	Main::instance = this;
-	createCloth(*this, -0.25, -0.25, 1, 1, 4, 4, 1, 1);
-	create<Gravity>(this, Vec(0, -0.5), Vec(0,0));
+	reset();
+}
+
+//------------------------------------------------------------------------------
+
+void Main::reset()
+{
+	clear();
+	
+	Vec G(0, -0.05);
+	
+	fluid = create<Fluid>(this, 100, 100, 0.05, 0.000001, G * 50.0);
+	createCloth(this, 0.25, 0.25, .5, .5, 4, 4, 1, 1);
+	create<Gravity>(this, G, 0.0);
 }
 
 //------------------------------------------------------------------------------
@@ -97,6 +114,12 @@ void Main::keypress(unsigned char key)
 		case 'q':
 		case '\e':
 			exit(0);
+			break;
+		
+		case GLUT_KEY_F5:
+		case 'r':
+			reset();
+			break;
 	}
 }
 

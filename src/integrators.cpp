@@ -19,6 +19,18 @@ void Euler::integrate(unit h)
 
 //------------------------------------------------------------------------------
 
+void Verlet::integrate(unit h)
+{
+	for (size_t i = 0; i < system.size; ++i)
+	{
+		Vec oldX = system.x[i];
+		system.x[i] += (h * system.v[i]) + (h * h * system.f[i] / system.m[i]);
+		system.v[i] = (system.x[i] - oldX) / h;
+	}
+}
+
+//------------------------------------------------------------------------------
+
 void MidPointBase::integrate(unit h)
 {
 	saveState();

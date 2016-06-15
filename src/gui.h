@@ -27,6 +27,11 @@ struct MouseEvent
 	} button;
 };
 
+struct Rect
+{
+	float left, right, top, bottom;
+};
+
 //------------------------------------------------------------------------------
 
 #define PROPERTY(ptype, type, name) \
@@ -43,6 +48,8 @@ public:
 	PROPERTY(Window, int, y);
 	PROPERTY(Window, int, width);
 	PROPERTY(Window, int, height);
+	
+	const Rect &bounds;
 	
 	void redraw();
 	
@@ -62,6 +69,7 @@ private:
 	static const int buttoncount = 3;
 	struct { int state, x, y; } buttons[buttoncount];
 	struct { int x, y, width, height; float ratio; } cache;
+	Rect bounds_v;
 	
 	static void reshape_func(int, int);
 	static void keyboard_func(unsigned char, int, int);

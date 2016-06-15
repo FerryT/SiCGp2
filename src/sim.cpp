@@ -127,6 +127,9 @@ void Simulation::act(Integrator &intg, unit h)
 {
 	calcForces();
 	intg.integrate(h);
+	for (Entity *ent : data->entities)
+		if (dynamic_cast<Actor *> (ent))
+			dynamic_cast<Actor *> (ent)->act(h);
 }
 
 //------------------------------------------------------------------------------

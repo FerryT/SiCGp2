@@ -50,6 +50,15 @@ public:
 
 //------------------------------------------------------------------------------
 
+class Verlet : public Integrator
+{
+public:
+	Verlet(Simulation &sim) : Integrator(sim) {}
+	void integrate(unit);
+};
+
+//------------------------------------------------------------------------------
+
 class MidPointBase : public Integrator
 {
 public:

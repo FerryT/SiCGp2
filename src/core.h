@@ -52,6 +52,16 @@ public:
 
 //------------------------------------------------------------------------------
 
+/** Classes that can act in teh simulation */
+class Actor
+{
+public:
+	virtual void act(unit dt) = 0;
+	virtual ~Actor() {};
+};
+
+//------------------------------------------------------------------------------
+
 class ParticleBase : public Entity, public virtual Drawable
 {
 public:

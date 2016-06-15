@@ -3,6 +3,7 @@
  *********************************************************************/
 
 #include <stdlib.h>
+#include <iostream>
 #include <map>
 
 #include "GL/freeglut.h"
@@ -46,6 +47,8 @@ void Window::reshape_func(int width, int height)
 	win->cache.width = width;
 	win->cache.height = height;
 	win->cache.ratio = (float) width / (float) height;
+	win->bounds_v.left = (1.0 - win->cache.ratio) / 2.0;
+	win->bounds_v.right = 1.0 - win->bounds_v.left;
 	win->resized();
 }
 
@@ -117,7 +120,8 @@ void Window::display_func()
 //------------------------------------------------------------------------------
 
 Window::Window(const char *title)
-	: x(*this), y(*this), width(*this), height(*this),
+	: bounds(bounds_v), x(*this), y(*this), width(*this), height(*this),
+	bounds_v({0.0, 1.0, 0.0, 1.0}),
 	cache({0, 0, default_width, default_height,
 		(float) default_width / (float) default_height})
 {
@@ -130,6 +134,8 @@ Window::Window(const char *title)
 	id = glutCreateWindow(title);
 	windows[id] = this;
 	
+	bounds_v.left = (1.0 - cache.ratio) / 2.0;
+	bounds_v.right = 1.0 - bounds_v.left;
 	cache.x = default_x;
 	cache.y = default_y;
 	
@@ -202,6 +208,8 @@ int Window::width::operator =(int const &w)
 	glutSetWindow(parent.id);
 	glutReshapeWindow(w, parent.cache.height);
 	parent.cache.ratio = (float) w / (float) parent.cache.height;
+	parent.bounds_v.left = (1.0 - parent.cache.ratio) / 2.0;
+	parent.bounds_v.right = 1.0 - parent.bounds_v.left;
 	return parent.cache.width = w;
 }
 
@@ -210,6 +218,8 @@ int Window::height::operator =(int const &h)
 	glutSetWindow(parent.id);
 	glutReshapeWindow(parent.cache.width, h);
 	parent.cache.ratio = (float) parent.cache.width / (float) h;
+	parent.bounds_v.left = (1.0 - parent.cache.ratio) / 2.0;
+	parent.bounds_v.right = 1.0 - parent.bounds_v.left;
 	return parent.cache.height = h;
 }
 
@@ -226,7 +236,7 @@ void Window::predraw()
 	glViewport(0, 0, cache.width, cache.height);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluOrtho2D(-cache.ratio, cache.ratio, -1.0, 1.0);
+	gluOrtho2D(bounds.left, bounds.right, bounds.top, bounds.bottom);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 }
