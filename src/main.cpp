@@ -197,9 +197,9 @@ void Main::preact()
 	//if (scene == 1)
 	if (fluid)
 	{
-		fluid->mouse.pos = normalPosition(mouse.x, mouse.y);
+		fluid->mouse.pos = Vec(0.0, 1.0) + normalPosition(mouse.x, mouse.y);
 		if (mouse.down & GUI::MouseEvent::btnLeft)
-			fluid->mouse.v = normalPosition(mouse.dx, mouse.dy) * 300.0;
+			fluid->mouse.v = normalPosition(mouse.dx, mouse.dy) * 1000000.0;
 		if (mouse.down & GUI::MouseEvent::btnRight)
 		{
 			fluid->mouse.v = Vec(300.0,0.0);
@@ -301,8 +301,7 @@ inline Vec Main::getMouse()
 
 inline Vec Main::normalPosition(int x, int y)
 {
-	return Vec((unit) x / (unit) width,
-		1.0 - ((unit) y / (unit) height));
+	return Vec((unit) x / (unit) width, -((unit) y / (unit) height));
 }
 
 //------------------------------------------------------------------------------
