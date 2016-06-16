@@ -86,21 +86,28 @@ void Fluid::act(unit dt)
 	// Reset, apply gravity
 	for (int i = 0; i < size; ++i)
 	{
-		u_old[i] = 0.0;
-		v_old[i] = 0.0;
+		u_old[i] = g.x * d[i];
+		v_old[i] = g.y * d[i];
 		d_old[i] = 0.0;
 	}
-	FOR_EACH_CELL(i, j)
-		if (i > 1 && i < width - 1 && j > 1 && j < height - 1)
-		{
-			u_old[IX(i, j)] = g.x * d[IX(i, j)] * 1.0;
-			v_old[IX(i, j)] = g.y * d[IX(i, j)] * 1.0;
-		}
-	END_FOR
-	// Debug:
-	u_old[IX(width/2 + 1, height - 5)] = 500.0;
-	v_old[IX(width/2 + 1, height - 5)] = 0.0;
-	d_old[IX(width/2 + 1, height - 5)] = 300.0;
+	
+	// Mouse interaction
+	{
+		int i = (int) (width * mouse.pos.x + 0.5);
+		int j = (int) (height * mouse.pos.y + 0.5);
+		
+		if (i < 0) i = 0;
+		if (i >= width) i = width -1;
+		if (j < 0) j = 0;
+		if (j >= height) j = height -1;
+		
+		u_old[IX(i,j)] += mouse.v.x;
+		v_old[IX(i,j)] += mouse.v.y;
+		d_old[IX(i,j)] += mouse.d;
+		mouse.v = Vec();
+		mouse.d = 0;
+	}
+	
 	vel_step(u, v, u_old, v_old, visc, dt);
 	dens_step(d, d_old, u, v, diff, dt);
 }

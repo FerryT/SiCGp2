@@ -28,6 +28,12 @@ public:
 	unit *u, *u_old; // velocity x
 	unit *v, *v_old; // velocity y
 	unit *d, *d_old; // density
+	struct
+	{
+		Vec pos;
+		unit d;
+		Vec v;
+	} mouse;
 	
 	Fluid(Simulation *sim, int width, int height, unit visc = 0.0, unit diff = 0.0, Vec g = Vec());
 	~Fluid();

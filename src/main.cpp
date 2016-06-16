@@ -43,6 +43,7 @@ public:
 	void mousemove(const GUI::MouseEvent &);
 	
 	inline Vec getMouse();
+	inline Vec normalPosition(int x, int y);
 	
 	static Main *instance;
 	static void Frame()
@@ -55,7 +56,7 @@ public:
 
 private:
 	int scene = 1;
-	struct { int x, y; bool down; } mouse;
+	struct { int x, y, dx, dy; int down; } mouse;
 };
 
 Main *Main::instance = NULL;
@@ -86,14 +87,15 @@ int main(int argc, char *argv[])
 
 template <> void Main::gotoScene<1>()
 {
-	Vec G(0, -0.05);
-	fluid = create<Fluid>(this, 20, 20, 0.0001, 0.000001, G * 50.0);
-	createCloth(this, 0.25, 0.5, .5, .5, 30, 30, -1000, -100);
-	create<Gravity>(this, G, 0.0);
+	Vec G(0, -10.0);
+	fluid = create<Fluid>(this, 30, 30, 0.0001, 0.000001, G);
 }
 
 template <> void Main::gotoScene<2>()
 {
+	Vec G(0, -0.1);
+	createCloth(this, 0.25, 0.5, .5, .5, 30, 30, -1000, -100);
+	create<Gravity>(this, G, 0.0);
 }
 
 template <> void Main::gotoScene<3>()
@@ -136,7 +138,7 @@ void createCloth(Simulation *sim, unit x, unit y, unit w, unit h, int rx, int ry
 
 //------------------------------------------------------------------------------
 
-Main::Main(const char *title) : Simulation(title), mouse({0,0, false})
+Main::Main(const char *title) : Simulation(title), mouse({0,0,0,0,0})
 {
 	Main::instance = this;
 	reset();
@@ -169,6 +171,19 @@ void Main::reset()
 
 void Main::preact()
 {
+	if (scene == 1)
+	{
+		fluid->mouse.pos = normalPosition(mouse.x, mouse.y);
+		if (mouse.down & GUI::MouseEvent::btnLeft)
+			fluid->mouse.v = normalPosition(mouse.dx, mouse.dy) * 300.0;
+		if (mouse.down & GUI::MouseEvent::btnRight)
+		{
+			if (mouse.down & GUI::MouseEvent::btnLeft)
+				fluid->mouse.d = -100.0;
+			else
+				fluid->mouse.d = 100.0;
+		}
+	}
 }
 
 //------------------------------------------------------------------------------
@@ -215,13 +230,15 @@ void Main::keypress(unsigned char key)
 
 void Main::mousemove(const GUI::MouseEvent &event)
 {
+	mouse.dx = event.x - mouse.x;
+	mouse.dy = event.y - mouse.y;
 	mouse.x = event.x;
 	mouse.y = event.y;
 }
 
-void Main::mouseup(const GUI::MouseEvent &)
+void Main::mouseup(const GUI::MouseEvent &event)
 {
-	mouse.down = false;
+	mouse.down = mouse.down & ~event.button;
 	selected = NULL;
 }
 
@@ -229,27 +246,38 @@ void Main::mousedown(const GUI::MouseEvent &event)
 {
 	mouse.x = event.x;
 	mouse.y = event.y;
-	mouse.down = true;
+	mouse.down |= event.button;
 	
-	Vec m = getMouse();
-	unit min = 1.0 / 0.0;
-	selected = NULL;
-	for (ParticleBase **pb = getParticles(); *pb; ++pb)
+	if (scene == 2)
 	{
-		unit l = (*(**pb).x - m).length();
-		if (l < min)
+		Vec m = getMouse();
+		unit min = 1.0 / 0.0;
+		selected = NULL;
+		for (ParticleBase **pb = getParticles(); *pb; ++pb)
 		{
-			min = l;
-			selected = *pb;
+			unit l = (*(**pb).x - m).length();
+			if (l < min)
+			{
+				min = l;
+				selected = *pb;
+			}
 		}
 	}
 }
+
+//------------------------------------------------------------------------------
 
 inline Vec Main::getMouse()
 {
 	unit x = ((bounds.right - bounds.left) / (unit) width) * (unit) mouse.x;
 	unit y = ((bounds.bottom - bounds.top) / (unit) height) * (unit) mouse.y;
 	return Vec(bounds.left + x, bounds.bottom - y);
+}
+
+inline Vec Main::normalPosition(int x, int y)
+{
+	return Vec((unit) x / (unit) width,
+		1.0 - ((unit) y / (unit) height));
 }
 
 //------------------------------------------------------------------------------
