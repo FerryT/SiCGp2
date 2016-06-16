@@ -18,7 +18,7 @@ namespace Sim {
 
 //------------------------------------------------------------------------------
 
-class Fluid : public Entity, virtual public Drawable, virtual public Actor, virtual public Appliable
+class Fluid : public Entity, virtual public Drawable, virtual public Actor
 {
 public:
 	Simulation *sim;
@@ -40,7 +40,7 @@ public:
 	~Fluid();
 	
 	void draw();
-	void apply();
+	//void apply();
 	void act(unit dt);
 
 private:

@@ -16,6 +16,7 @@
 #include "sim.h"
 #include "integrators.h"
 #include "fluid.h"
+#include "effects.h"
 
 using namespace Sim;
 
@@ -28,6 +29,7 @@ public:
 	unit dt = 0.001;
 	
 	Fluid *fluid = NULL;
+	Texture *t1 = NULL;
 	Entity *selected = NULL;
 	
 	template <int I> void gotoScene();
@@ -62,7 +64,7 @@ private:
 Main *Main::instance = NULL;
 
 void createCloth(Simulation *sim, unit x, unit y, unit w, unit h, int rx, int ry,
-	unit ks, unit kd);
+	unit ks, unit kd, Texture *tex = NULL);
 
 //------------------------------------------------------------------------------
 
@@ -75,7 +77,10 @@ int main(int argc, char *argv[])
 		Euler euler(sim);
 		MidPoint<Verlet> midpoint(sim);
 		RungeKutta4< RungeKutta4<Verlet> > superrunge(sim);
-		sim.integrator = &euler;
+		sim.integrator = &verlet;
+		
+		Texture texture("cloth.raw", 477, 477);
+		sim.t1 = &texture;
 		
 		GUI::Run(Main::Frame);
 	}
@@ -94,8 +99,8 @@ template <> void Main::gotoScene<1>()
 template <> void Main::gotoScene<2>()
 {
 	Vec G(0, -1.0);
-	fluid = create<Fluid>(this, 60, 60, 0.0001, 0.000001, G);
-	createCloth(this, 0.25, 0.25, .5, .5, 5, 5, -1000, -100);
+	fluid = create<Fluid>(this, 30, 30, 0.0001, 0.000001, G);
+	createCloth(this, 0.25, 0.25, .5, .5, 10, 10, -1000, -100, t1);
 	create<Gravity>(this, G, 0.0);
 }
 
@@ -115,12 +120,12 @@ template <> void Main::gotoScene<5>()
 //------------------------------------------------------------------------------
 
 void createCloth(Simulation *sim, unit x, unit y, unit w, unit h, int rx, int ry,
-	unit ks, unit kd)
+	unit ks, unit kd, Texture *tex)
 {
 	std::map< int, std::map<int,ParticleBase *> > grid;
 	
-	const unit dx = w / (unit) rx;
-	const unit dy = h / (unit) ry;
+	unit dx = w / (unit) rx;
+	unit dy = h / (unit) ry;
 	
 	for (int i = 0; i < rx; ++i)
 		for (int j = 0; j < ry; ++j)
@@ -134,9 +139,21 @@ void createCloth(Simulation *sim, unit x, unit y, unit w, unit h, int rx, int ry
 		for (int i = 0; i < rx; ++i)
 			sim->create<Spring>(grid[i][j], grid[i][j+1], dy, ks, kd);
 	
-	for (int i = 0; i < rx-1; ++i)
-		for (int j = 0; j < ry-1; ++j)
-			sim->create<Quad>(grid[i][j], grid[i+1][j], grid[i+1][j+1], grid[i][j+1]);
+	dx = 1.0 / (unit) (rx-1);
+	dy = 1.0 / (unit) (ry-1);
+	
+	if (!tex)
+		for (int i = 0; i < rx-1; ++i)
+			for (int j = 0; j < ry-1; ++j)
+				sim->create<Quad>(grid[i][j], grid[i+1][j], grid[i+1][j+1], grid[i][j+1]);
+	else
+		for (int i = 0; i < rx-1; ++i)
+			for (int j = 0; j < ry-1; ++j)
+				sim->create<Sheet>(grid[i][j], grid[i+1][j], grid[i+1][j+1], grid[i][j+1],
+				Vec((unit) i * dx, (unit) j * dy),
+				Vec((unit) (i+1) * dx, (unit) j * dy),
+				Vec((unit) (i+1) * dx, (unit) (j+1) * dy),
+				Vec((unit) i * dx, (unit) (j+1) * dy), tex);
 
 	sim->create<Glue>(grid[0][ry-1], *grid[0][ry-1]->x);
 	sim->create<Glue>(grid[rx-1][ry-1], *grid[rx-1][ry-1]->x);

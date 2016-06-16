@@ -83,10 +83,10 @@ void Fluid::draw()
 	glEnd();
 }
 
-void Fluid::apply()
+/*void Fluid::apply()
 {
 	// Coupling A
-	/*unit fx = (sim->bounds.right - sim->bounds.left) * (unit) width;
+	unit fx = (sim->bounds.right - sim->bounds.left) * (unit) width;
 	unit fy = (sim->bounds.bottom - sim->bounds.top) * (unit) height;
 	for (ParticleBase **p = sim->getParticles(); *p; ++p)
 	{
@@ -99,9 +99,8 @@ void Fluid::apply()
 		if (j >= height) j = height -1;
 
 		*(**p).f += d[IX(i,j)] * Vec(u[IX(i,j)], v[IX(i,j)]);
-	}*/
-
-}
+	}
+}*/
 
 void actEdge(Fluid &fluid, ParticleBase &p1, ParticleBase &p2)
 {
