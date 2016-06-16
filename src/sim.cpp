@@ -16,6 +16,7 @@ struct Simulation::Data
 {
 	std::vector<Entity *> entities;
 	std::vector<ParticleBase *>particles;
+	std::vector<Quad *>quads;
 	ParticleSystem system;
 	ParticleSystem cache;
 };
@@ -26,6 +27,7 @@ Simulation::Simulation(const char *title)
 	: Window(title), data(new Data)
 {
 	data->particles.push_back(NULL);
+	data->quads.push_back(NULL);
 }
 
 Simulation::~Simulation()
@@ -37,6 +39,12 @@ Simulation::~Simulation()
 void Simulation::manage(Entity *ent)
 {
 	data->entities.push_back(ent);
+	Quad *q = dynamic_cast<Quad *> (ent);
+	if (q)
+	{
+		data->quads.back() = q;
+		data->quads.push_back(NULL);
+	}
 }
 
 ParticleBase *Simulation::manage(const Particle &p)
@@ -108,6 +116,8 @@ void Simulation::clear()
 	data->entities.clear();
 	data->particles.clear();
 	data->particles.push_back(NULL);
+	data->quads.clear();
+	data->quads.push_back(NULL);
 	data->system = ParticleSystem();
 	data->cache = ParticleSystem();
 }
@@ -126,10 +136,10 @@ void Simulation::draw()
 void Simulation::act(Integrator &intg, unit h)
 {
 	calcForces();
-	intg.integrate(h);
 	for (Entity *ent : data->entities)
 		if (dynamic_cast<Actor *> (ent))
 			dynamic_cast<Actor *> (ent)->act(h);
+	intg.integrate(h);
 }
 
 //------------------------------------------------------------------------------
@@ -137,6 +147,13 @@ void Simulation::act(Integrator &intg, unit h)
 ParticleBase **Simulation::getParticles()
 {
 	return data->particles.data();
+}
+
+//------------------------------------------------------------------------------
+
+Quad **Simulation::getQuads()
+{
+	return data->quads.data();
 }
 
 //------------------------------------------------------------------------------

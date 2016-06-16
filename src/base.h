@@ -77,6 +77,7 @@ struct Vec2d : public Vector<2>
 		{ x /= s; y /= s; return *this; }
 	
 	unit length() const;
+	unit lengthM() const;
 	unit length2() const
 		{ return x * x + y * y; }
 	unit operator *(const Vec2d &v) const // Dot product!

@@ -27,7 +27,7 @@ public:
 	Integrator *integrator = NULL;
 	unit dt = 0.001;
 	
-	Fluid *fluid;
+	Fluid *fluid = NULL;
 	Entity *selected = NULL;
 	
 	template <int I> void gotoScene();
@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
 		Euler euler(sim);
 		MidPoint<Verlet> midpoint(sim);
 		RungeKutta4< RungeKutta4<Verlet> > superrunge(sim);
-		sim.integrator = &verlet;
+		sim.integrator = &euler;
 		
 		GUI::Run(Main::Frame);
 	}
@@ -94,12 +94,14 @@ template <> void Main::gotoScene<1>()
 template <> void Main::gotoScene<2>()
 {
 	Vec G(0, -0.1);
-	createCloth(this, 0.25, 0.5, .5, .5, 30, 30, -1000, -100);
+	fluid = create<Fluid>(this, 30, 30, 0.0001, 0.000001, G * 10.0);
+	createCloth(this, 0.25, 0.5, .5, .5, 3, 3, -1000, -100);
 	create<Gravity>(this, G, 0.0);
 }
 
 template <> void Main::gotoScene<3>()
 {
+
 }
 
 template <> void Main::gotoScene<4>()
@@ -132,6 +134,10 @@ void createCloth(Simulation *sim, unit x, unit y, unit w, unit h, int rx, int ry
 		for (int i = 0; i < rx; ++i)
 			sim->create<Spring>(grid[i][j], grid[i][j+1], dy, ks, kd);
 	
+	for (int i = 0; i < rx-1; ++i)
+		for (int j = 0; j < ry-1; ++j)
+			sim->create<Quad>(grid[i][j], grid[i+1][j], grid[i+1][j+1], grid[i][j+1]);
+
 	sim->create<Glue>(grid[0][ry-1], *grid[0][ry-1]->x);
 	sim->create<Glue>(grid[rx-1][ry-1], *grid[rx-1][ry-1]->x);
 }
@@ -171,13 +177,15 @@ void Main::reset()
 
 void Main::preact()
 {
-	if (scene == 1)
+	//if (scene == 1)
+	if (fluid)
 	{
 		fluid->mouse.pos = normalPosition(mouse.x, mouse.y);
 		if (mouse.down & GUI::MouseEvent::btnLeft)
 			fluid->mouse.v = normalPosition(mouse.dx, mouse.dy) * 300.0;
 		if (mouse.down & GUI::MouseEvent::btnRight)
 		{
+			fluid->mouse.v = Vec(300.0,0.0);
 			if (mouse.down & GUI::MouseEvent::btnLeft)
 				fluid->mouse.d = -100.0;
 			else
@@ -190,7 +198,7 @@ void Main::preact()
 
 void Main::postact()
 {
-	if (selected)
+	/*if (selected)
 	{
 		ParticleBase *pb = dynamic_cast<ParticleBase *> (selected);
 		if (pb)
@@ -199,7 +207,7 @@ void Main::postact()
 			*pb->v = Vec();
 			*pb->f = Vec();
 		}
-	}
+	}*/
 }
 
 //------------------------------------------------------------------------------

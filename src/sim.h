@@ -39,6 +39,7 @@ public:
 	virtual void act(Integrator &, unit h);
 	
 	ParticleBase **getParticles();
+	Quad **getQuads();
 
 protected:
 	ParticleSystem &getSystem();

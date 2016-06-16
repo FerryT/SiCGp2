@@ -18,7 +18,7 @@ namespace Sim {
 
 //------------------------------------------------------------------------------
 
-class Fluid : public Entity, virtual public Drawable, virtual public Actor
+class Fluid : public Entity, virtual public Drawable, virtual public Actor, virtual public Appliable
 {
 public:
 	Simulation *sim;
@@ -28,6 +28,7 @@ public:
 	unit *u, *u_old; // velocity x
 	unit *v, *v_old; // velocity y
 	unit *d, *d_old; // density
+	ParticleBase **p; // Particles (or not)
 	struct
 	{
 		Vec pos;
@@ -39,6 +40,7 @@ public:
 	~Fluid();
 	
 	void draw();
+	void apply();
 	void act(unit dt);
 
 private:

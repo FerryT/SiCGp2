@@ -103,6 +103,18 @@ struct ParticleSystem
 
 //------------------------------------------------------------------------------
 
+class Quad : public Entity, virtual public Drawable
+{
+public:
+	ParticleBase *p1, *p2, *p3, *p4;
+	Quad(ParticleBase *_p1, ParticleBase *_p2, ParticleBase *_p3, ParticleBase *_p4)
+		: p1(_p1), p2(_p2), p3(_p3), p4(_p4) {}
+
+	void draw() {}
+};
+
+//------------------------------------------------------------------------------
+
 } /* namespace Sim */
 
 #endif /* _CORE_H */
