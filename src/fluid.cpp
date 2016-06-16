@@ -86,7 +86,7 @@ void Fluid::draw()
 void Fluid::apply()
 {
 	// Coupling A
-/*	unit fx = (sim->bounds.right - sim->bounds.left) * (unit) width;
+	/*unit fx = (sim->bounds.right - sim->bounds.left) * (unit) width;
 	unit fy = (sim->bounds.bottom - sim->bounds.top) * (unit) height;
 	for (ParticleBase **p = sim->getParticles(); *p; ++p)
 	{
@@ -100,6 +100,7 @@ void Fluid::apply()
 
 		*(**p).f += d[IX(i,j)] * Vec(u[IX(i,j)], v[IX(i,j)]);
 	}*/
+
 }
 
 void actEdge(Fluid &fluid, ParticleBase &p1, ParticleBase &p2)
@@ -135,7 +136,7 @@ int collidingCell(Fluid &fluid, int i, int j, unit x, unit y)
 {
 	const int &width = fluid.width;
 	const int &height = fluid.height;
-	
+
 	int l = abs((i - x) + (j - y)) + 1;
 	unit di = (i - x) / (unit) l;
 	unit dj = (j - y) / (unit) l;
@@ -144,7 +145,10 @@ int collidingCell(Fluid &fluid, int i, int j, unit x, unit y)
 	{
 		m = IX((int) x, (int) y);
 		if (fluid.p[m])
+		{
+			*fluid.p[m]->f += Vec(fluid.u[m], fluid.v[m]) * fluid.d[m];
 			return m;
+		}
 		x += di;
 		y += dj;
 	}
@@ -270,7 +274,8 @@ void Fluid::advect(int b, unit *d, unit *d0, unit *u, unit *v, unit dt)
 		//d[IX(i, j)] = ...
 		d[collidingCell(*this, i, j, x, y)]
 			+= s0 * (t0 * d0[IX(i0, j0)] + t1 * d0[IX(i0, j1)]) +
-		       s1 * (t0 * d0[IX(i1, j0)] + t1 * d0[IX(i1, j1)]);
+			s1 * (t0 * d0[IX(i1, j0)] + t1 * d0[IX(i1, j1)]);
+
 	END_FOR
 	set_bnd(b, d);
 }

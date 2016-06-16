@@ -93,9 +93,9 @@ template <> void Main::gotoScene<1>()
 
 template <> void Main::gotoScene<2>()
 {
-	Vec G(0, -0.1);
-	fluid = create<Fluid>(this, 30, 30, 0.0001, 0.000001, G * 10.0);
-	createCloth(this, 0.25, 0.5, .5, .5, 3, 3, -1000, -100);
+	Vec G(0, -1.0);
+	fluid = create<Fluid>(this, 60, 60, 0.0001, 0.000001, G);
+	createCloth(this, 0.25, 0.25, .5, .5, 5, 5, -1000, -100);
 	create<Gravity>(this, G, 0.0);
 }
 
@@ -187,9 +187,9 @@ void Main::preact()
 		{
 			fluid->mouse.v = Vec(300.0,0.0);
 			if (mouse.down & GUI::MouseEvent::btnLeft)
-				fluid->mouse.d = -100.0;
+				fluid->mouse.d = -1000.0;
 			else
-				fluid->mouse.d = 100.0;
+				fluid->mouse.d = 1000.0;
 		}
 	}
 }
