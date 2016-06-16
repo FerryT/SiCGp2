@@ -30,8 +30,9 @@ public:
 	Fluid *fluid;
 	Entity *selected = NULL;
 	
-	Main(const char *title);
+	template <int I> void gotoScene();
 	
+	Main(const char *title);
 	void reset();
 	void preact();
 	void postact();
@@ -53,10 +54,14 @@ public:
 	}
 
 private:
+	int scene = 1;
 	struct { int x, y; bool down; } mouse;
 };
 
 Main *Main::instance = NULL;
+
+void createCloth(Simulation *sim, unit x, unit y, unit w, unit h, int rx, int ry,
+	unit ks, unit kd);
 
 //------------------------------------------------------------------------------
 
@@ -75,6 +80,32 @@ int main(int argc, char *argv[])
 	}
 	getchar();
 	return (EXIT_SUCCESS);
+}
+
+//------------------------------------------------------------------------------
+
+template <> void Main::gotoScene<1>()
+{
+	Vec G(0, -0.05);
+	fluid = create<Fluid>(this, 20, 20, 0.0001, 0.000001, G * 50.0);
+	createCloth(this, 0.25, 0.5, .5, .5, 30, 30, -1000, -100);
+	create<Gravity>(this, G, 0.0);
+}
+
+template <> void Main::gotoScene<2>()
+{
+}
+
+template <> void Main::gotoScene<3>()
+{
+}
+
+template <> void Main::gotoScene<4>()
+{
+}
+
+template <> void Main::gotoScene<5>()
+{
 }
 
 //------------------------------------------------------------------------------
@@ -113,14 +144,25 @@ Main::Main(const char *title) : Simulation(title), mouse({0,0, false})
 
 //------------------------------------------------------------------------------
 
+template <> void Main::gotoScene<0>()
+{
+	switch (scene)
+	{
+		case 1: gotoScene<1>(); break;
+		case 2: gotoScene<2>(); break;
+		case 3: gotoScene<3>(); break;
+		case 4: gotoScene<4>(); break;
+		case 5: gotoScene<5>(); break;
+		default: gotoScene<1>(); break;
+	}
+}
+
+//------------------------------------------------------------------------------
+
 void Main::reset()
 {
 	clear();
-	
-	Vec G(0, -0.05);
-	fluid = create<Fluid>(this, 20, 20, 0.0001, 0.000001, G * 50.0);
-	createCloth(this, 0.25, 0.5, .5, .5, 30, 30, -1000, -100);
-	create<Gravity>(this, G, 0.0);
+	gotoScene<0>();
 }
 
 //------------------------------------------------------------------------------
@@ -149,6 +191,12 @@ void Main::postact()
 
 void Main::keypress(unsigned char key)
 {
+	if (key >= '0' && key <= '9')
+	{
+		scene = key - '0';
+		reset();
+		return;
+	}
 	switch (key)
 	{
 		case 'q':
