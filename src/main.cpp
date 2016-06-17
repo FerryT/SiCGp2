@@ -27,6 +27,9 @@ class Main : public Simulation
 public:
 	Integrator *integrator = NULL;
 	unit dt = 0.001;
+	bool HD = false;
+	bool skin = true;
+	unit gravity = 1.0;
 	
 	Fluid *fluid = NULL;
 	Texture *t1 = NULL;
@@ -69,6 +72,8 @@ void createCloth(Simulation *sim, unit x, unit y, unit w, unit h, int rx, int ry
 
 void createBox(Simulation *sim, unit x, unit y, unit w, unit h, Texture *tex = NULL);
 
+void createRibbon(Simulation *sim, unit x1, unit y1, unit x2, unit y2, unit w, int r);
+
 //------------------------------------------------------------------------------
 
 int main(int argc, char *argv[])
@@ -97,32 +102,63 @@ int main(int argc, char *argv[])
 
 template <> void Main::gotoScene<1>()
 {
-	Vec G(0, -10.0);
-	fluid = create<Fluid>(this, 30, 30, 0.0001, 0.000001, G);
-	createBox(this, 0.4, 0.4, 0.2, 0.2, t2);
-	create<Borders>(this);
+	std::cout << "[Scene 1] Fluid dynamics\n\t"
+		"LMB: drag forces\tRMB: add fluid\tLMB+RMB: remove fluid\n";
+	
+	Vec G(0, -10.0); G *= gravity;
+	int hd = HD ? 2 : 1;
+	fluid = create<Fluid>(this, 40 * hd, 30 * hd, 0.0001, 0.000001, G);
 }
 
 template <> void Main::gotoScene<2>()
 {
-	Vec G(0, -1.0);
-	fluid = create<Fluid>(this, 30, 30, 0.0001, 0.000001, G);
-	createCloth(this, 0.25, 0.25, .5, .5, 10, 10, -1000, -100, t1);
+	std::cout << "[Scene 2] Cloth interaction\n\t"
+		"LMB/RMB: as before\tMMB: manipulate cloth\n";
+	
+	Vec G(0, -1.0); G *= gravity;
+	int hd = HD ? 2 : 1;
+	fluid = create<Fluid>(this, 40 * hd, 30 * hd, 0.0001, 0.000001, G);
+	createCloth(this, 0.25, 0.25, .5, .5, 5 * hd, 5 * hd, -1000, -100,
+		skin ? t1 : NULL);
 	create<Gravity>(this, G, 0.0);
 }
 
 template <> void Main::gotoScene<3>()
 {
-	Vec G(0, -10.0);
-	fluid = create<Fluid>(this, 30, 30, 0.0001, 0.000001, G);
+	std::cout << "[Scene 3] Box interaction\n\t"
+		"LMB/RMB: as before\tMMB: manipulate box\n";
+	Vec G(0, -10.0); G *= gravity;
+	int hd = HD ? 2 : 1;
+	fluid = create<Fluid>(this, 40 * hd, 30 * hd, 0.0001, 0.000001, G);
+	createBox(this, 0.4, 0.5, 0.2, 0.2, skin ? t2 : NULL);
+	create<Borders>(this);
 }
 
 template <> void Main::gotoScene<4>()
 {
+	std::cout << "[Scene 4] Water slide\n";
+	Vec G(0, -1.0); G *= gravity;
+	int hd = HD ? 2 : 1;
+	fluid = create<Fluid>(this, 40 * hd, 30 * hd, 0.0001, 0.000001, G);
+	createRibbon(this, 0.3, 0.7, 1.0, 0.9, 0.05, 6);
+	createRibbon(this, -0.1, 0.8, 0.3, 0.5, 0.05, 5);
+	createRibbon(this, 0.2, 0.4, 0.4, 0.4, 0.1, 4);
+	createRibbon(this, -0.1, 0.3, 0.9, 0.2, 0.1, 10);
+	create<Gravity>(this, G, 0.0);
 }
 
 template <> void Main::gotoScene<5>()
 {
+	std::cout << "[Scene 5] Collisions\n";
+	Vec G(0, -10.0); G *= gravity;
+	int hd = HD ? 2 : 1;
+	fluid = create<Fluid>(this, 40 * hd, 30 * hd, 0.0001, 0.000001, G);
+	createBox(this, 0.4, 0.7, 0.2, 0.2, skin ? t2 : NULL);
+	createBox(this, 0.25, 0.4, 0.2, 0.2, skin ? t2 : NULL);
+	createBox(this, 0.55, 0.4, 0.2, 0.2, skin ? t2 : NULL);
+	create<Borders>(this);
+	create<Collisions>(this);
+	//create<Gravity>(this, G, 0.0);
 }
 
 //------------------------------------------------------------------------------
@@ -176,7 +212,7 @@ void createBox(Simulation *sim, unit x, unit y, unit w, unit h, Texture *tex)
 	ParticleBase *p3 = sim->addParticle(Vec(x+w, y+h));
 	ParticleBase *p4 = sim->addParticle(Vec(x, y+h));
 	
-	*p1->m = *p2->m = *p3->m = *p4->m = 1;
+	*p1->m = *p2->m = *p3->m = *p4->m = 1.0;
 	
 	unit d = Vec(w,h).length();
 	unit ks = -1000;
@@ -194,6 +230,49 @@ void createBox(Simulation *sim, unit x, unit y, unit w, unit h, Texture *tex)
 		sim->create<Sheet>(p1, p2, p3, p4,
 			Vec(0.0, 0.0), Vec(1.0, 0.0),
 			Vec(1.0, 1.0), Vec(0.0, 1.0), tex);
+}
+
+//------------------------------------------------------------------------------
+
+void createRibbon(Simulation *sim, unit x1, unit y1, unit x2, unit y2, unit w, int r)
+{
+	std::map< int, std::map<int,ParticleBase *> > grid;
+	
+	Vec p1(x1, y1), p2(x2, y2);
+	Vec v = p2 - p1,
+		d = v / (unit) r,
+		dw = ~v.rotL() * w,
+		k = p1;
+	unit l = d.length();
+	unit dl = (d+dw).length();
+	unit ks = -1000;
+	unit kd = -300;
+	
+	for (int i = 0; i < r; ++i)
+	{
+		grid[i][0] = sim->addParticle(k - dw);
+		grid[i][1] = sim->addParticle(k + dw);
+		k += d;
+	}
+	
+	for (int i = 0; i < r-1; ++i)
+		for (int j = 0; j < 2; ++j)
+			sim->create<Spring>(grid[i][j], grid[i+1][j], l, ks, kd);
+	
+	for (int i = 0; i < r; ++i)
+		sim->create<Spring>(grid[i][0], grid[i][1], w, ks, kd);
+	
+	for (int i = 0; i < r-1; ++i)
+	{
+		sim->create<Spring>(grid[i][0], grid[i+1][1], dl, ks, kd);
+		sim->create<Spring>(grid[i][1], grid[i+1][0], dl, ks, kd);
+	}
+	
+	for (int i = 0; i < r-1; ++i)
+		sim->create<Quad>(grid[i][0], grid[i+1][0], grid[i+1][1], grid[i][1]);
+	
+	sim->create<Glue>(grid[0][0], *grid[0][0]->x);
+	sim->create<Glue>(grid[r-1][0], *grid[r-1][0]->x);
 }
 
 //------------------------------------------------------------------------------
@@ -231,7 +310,6 @@ void Main::reset()
 
 void Main::preact()
 {
-	//if (scene == 1)
 	if (fluid)
 	{
 		fluid->mouse.pos = Vec(0.0, 1.0) + normalPosition(mouse.x, mouse.y);
@@ -239,7 +317,8 @@ void Main::preact()
 			fluid->mouse.v = normalPosition(mouse.dx, mouse.dy) * 1000000.0;
 		if (mouse.down & GUI::MouseEvent::btnRight)
 		{
-			fluid->mouse.v = Vec(300.0,0.0);
+			if (scene == 2)
+				fluid->mouse.v = Vec(300.0,0.0);
 			if (mouse.down & GUI::MouseEvent::btnLeft)
 				fluid->mouse.d = -1000.0;
 			else
@@ -252,7 +331,7 @@ void Main::preact()
 
 void Main::postact()
 {
-	/*if (selected)
+	if (selected)
 	{
 		ParticleBase *pb = dynamic_cast<ParticleBase *> (selected);
 		if (pb)
@@ -261,7 +340,7 @@ void Main::postact()
 			*pb->v = Vec();
 			*pb->f = Vec();
 		}
-	}*/
+	}
 }
 
 //------------------------------------------------------------------------------
@@ -276,14 +355,33 @@ void Main::keypress(unsigned char key)
 	}
 	switch (key)
 	{
-		case 'q':
+		case 'Q':
 		case '\e':
 			exit(0);
 			break;
 		
 		case GLUT_KEY_F5:
-		case 'r':
+		case 'R':
 			reset();
+			break;
+		
+		case 'H':
+			HD = !HD;
+			reset();
+			break;
+		
+		case 'T':
+			skin = !skin;
+			reset();
+			break;
+		
+		case 'G':
+			gravity = gravity == 1.0 ? 0.0 : 1.0;
+			reset();
+			break;
+		
+		case 'P':
+			std::cout << getMouse() << std::endl;
 			break;
 	}
 }
@@ -310,7 +408,7 @@ void Main::mousedown(const GUI::MouseEvent &event)
 	mouse.y = event.y;
 	mouse.down |= event.button;
 	
-	if (scene == 2)
+	if (event.button == GUI::MouseEvent::btnMiddle)
 	{
 		Vec m = getMouse();
 		unit min = 1.0 / 0.0;

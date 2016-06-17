@@ -108,6 +108,19 @@ public:
 
 //------------------------------------------------------------------------------
 
+/* *** Experimental *** */
+class Collisions : public Force
+{
+public:
+	Simulation *sim;
+	
+	Collisions(Simulation *_sim) : sim(_sim) {}
+	
+	virtual void apply();
+};
+
+//------------------------------------------------------------------------------
+
 } /* namespace Sim */
 
 #endif /* _FORCES_H */

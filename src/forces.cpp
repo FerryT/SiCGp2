@@ -159,6 +159,80 @@ void Borders::apply()
 
 //------------------------------------------------------------------------------
 
+bool collides(const Quad &q, const ParticleBase &p)
+{
+	unit c1 = (*q.p2->x - *q.p1->x) * (*p.x - *q.p1->x);
+	unit c2 = (*q.p3->x - *q.p2->x) * (*p.x - *q.p2->x);
+	unit c3 = (*q.p4->x - *q.p3->x) * (*p.x - *q.p3->x);
+	unit c4 = (*q.p1->x - *q.p4->x) * (*p.x - *q.p4->x);
+	//if (!c1 || !c2 || !c3 || !c4)
+	//	return true;
+	
+	int c = 0;
+	c += (c1 < 0) ? -1 : 1;
+	c += (c2 < 0) ? -1 : 1;
+	c += (c3 < 0) ? -1 : 1;
+	c += (c4 < 0) ? -1 : 1;
+	return (c == 4) || (c == -4);
+}
+
+inline Vec project(Vec u, Vec v, Vec p)
+{
+	Vec uv = v - u;
+	unit t = (uv * (p - u)) / uv.length2();
+	if (t > 1.0) t = 1.0;
+	if (t < 0.0) t = 0.0;
+	return u + t * uv;
+}
+
+Vec closest(const Quad &q, const ParticleBase &p)
+{
+	Vec p1 = project(*q.p1->x, *q.p2->x, *p.x);
+	Vec p2 = project(*q.p2->x, *q.p3->x, *p.x);
+	Vec p3 = project(*q.p3->x, *q.p4->x, *p.x);
+	Vec p4 = project(*q.p4->x, *q.p1->x, *p.x);
+	unit d1 = (*p.x - p1).length2();
+	unit d2 = (*p.x - p2).length2();
+	unit d3 = (*p.x - p3).length2();
+	unit d4 = (*p.x - p4).length2();
+	if (d1 <= d2 && d1 <= d3 && d1 <= d4) return p1;
+	if (d2 <= d1 && d2 <= d3 && d2 <= d4) return p2;
+	if (d3 <= d1 && d3 <= d2 && d3 <= d4) return p3;
+	if (d4 <= d1 && d4 <= d2 && d4 <= d3) return p4;
+	return p1;
+}
+
+void Collisions::apply()
+{
+	for (Quad **q = sim->getQuads(); *q; ++q)
+	{
+		for (ParticleBase **p = sim->getParticles(); *p; ++p)
+		{
+			if (*p == (*q)->p1 || *p == (*q)->p2
+			|| *p == (*q)->p3 || *p == (*q)->p4)
+				continue;
+			
+			if (collides(**q, **p))
+			{
+				Vec pc = closest(**q, **p);
+				Vec n = ~(*(**p).x - pc);
+				Vec v = *(**p).v;
+				if (v * n < 0)
+					continue;
+				*(**p).x = pc;
+				*(**q).p1->v += *(**p).v / 4.0;
+				*(**q).p2->v += *(**p).v / 4.0;
+				*(**q).p3->v += *(**p).v / 4.0;
+				*(**q).p4->v += *(**p).v / 4.0;
+				*(**p).v = 0.0;//(v - 2.0 * (v * n) * n);
+				*(**p).f = 0.0;
+			}
+		}
+	}
+}
+
+//------------------------------------------------------------------------------
+
 } /* namespace Sim */
 
 //..............................................................................
