@@ -24,16 +24,15 @@ class Simulation;
 
 //------------------------------------------------------------------------------
 
-class Force : public Entity, public virtual Drawable, public virtual Appliable
+class Force : public Entity, public virtual Appliable
 {
 public:
-	virtual void draw() {}
 	virtual void apply() {}
 };
 
 //------------------------------------------------------------------------------
 
-class Gravity : public Force
+class Gravity : public Force, public virtual Drawable
 {
 public:
 	Simulation *sim;
@@ -48,7 +47,7 @@ public:
 
 //------------------------------------------------------------------------------
 
-class Spring : public Force
+class Spring : public Force, public virtual Drawable
 {
 public:
 	ParticleBase *p1, *p2;
@@ -64,7 +63,7 @@ public:
 
 //------------------------------------------------------------------------------
 
-class AngularSpring : public Force
+class AngularSpring : public Force, public virtual Drawable
 {
 public:
 	ParticleBase *p1, *p2, *p3;
@@ -92,7 +91,18 @@ public:
 	
 	Glue(ParticleBase *_p, Vec _x) : p(_p), x(_x) {}
 	
-	virtual void draw();
+	virtual void apply();
+};
+
+//------------------------------------------------------------------------------
+
+class Borders : public Force
+{
+public:
+	Simulation *sim;
+	
+	Borders(Simulation *_sim) : sim(_sim) {}
+	
 	virtual void apply();
 };
 

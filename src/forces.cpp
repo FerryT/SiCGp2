@@ -117,17 +117,44 @@ void AngularSpring::apply()
 
 //------------------------------------------------------------------------------
 
-void Glue::draw()
-{
-}
-
-//------------------------------------------------------------------------------
-
 void Glue::apply()
 {
 	*p->x = x;
 	*p->v = Vec();
 	*p->f = Vec();
+}
+
+//------------------------------------------------------------------------------
+
+void Borders::apply()
+{
+	for (ParticleBase **p = sim->getParticles(); *p; ++p)
+	{
+		if ((*p)->x->x < sim->bounds.left)
+		{
+			(*p)->x->x = sim->bounds.left;
+			(*p)->v->x *= -1;
+			(*p)->f->x = 0;
+		}
+		if ((*p)->x->x > sim->bounds.right)
+		{
+			(*p)->x->x = sim->bounds.right;
+			(*p)->v->x *= -1;
+			(*p)->f->x = 0;
+		}
+		if ((*p)->x->y > sim->bounds.bottom)
+		{
+			(*p)->x->y = sim->bounds.bottom;
+			(*p)->v->y *= -1;
+			(*p)->f->y = 0;
+		}
+		if ((*p)->x->y < sim->bounds.top)
+		{
+			(*p)->x->y = sim->bounds.top;
+			(*p)->v->y *= -1;
+			(*p)->f->y = 0;
+		}
+	}
 }
 
 //------------------------------------------------------------------------------

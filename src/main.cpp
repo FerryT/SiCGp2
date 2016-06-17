@@ -30,6 +30,7 @@ public:
 	
 	Fluid *fluid = NULL;
 	Texture *t1 = NULL;
+	Texture *t2 = NULL;
 	Entity *selected = NULL;
 	
 	template <int I> void gotoScene();
@@ -66,6 +67,8 @@ Main *Main::instance = NULL;
 void createCloth(Simulation *sim, unit x, unit y, unit w, unit h, int rx, int ry,
 	unit ks, unit kd, Texture *tex = NULL);
 
+void createBox(Simulation *sim, unit x, unit y, unit w, unit h, Texture *tex = NULL);
+
 //------------------------------------------------------------------------------
 
 int main(int argc, char *argv[])
@@ -79,8 +82,10 @@ int main(int argc, char *argv[])
 		RungeKutta4< RungeKutta4<Verlet> > superrunge(sim);
 		sim.integrator = &verlet;
 		
-		Texture texture("cloth.raw", 477, 477);
-		sim.t1 = &texture;
+		Texture texture1("cloth.raw", 477, 477);
+		sim.t1 = &texture1;
+		Texture texture2("box.raw", 487, 400);
+		sim.t2 = &texture2;
 		
 		GUI::Run(Main::Frame);
 	}
@@ -94,6 +99,8 @@ template <> void Main::gotoScene<1>()
 {
 	Vec G(0, -10.0);
 	fluid = create<Fluid>(this, 30, 30, 0.0001, 0.000001, G);
+	createBox(this, 0.4, 0.4, 0.2, 0.2, t2);
+	create<Borders>(this);
 }
 
 template <> void Main::gotoScene<2>()
@@ -106,7 +113,8 @@ template <> void Main::gotoScene<2>()
 
 template <> void Main::gotoScene<3>()
 {
-
+	Vec G(0, -10.0);
+	fluid = create<Fluid>(this, 30, 30, 0.0001, 0.000001, G);
 }
 
 template <> void Main::gotoScene<4>()
@@ -157,6 +165,35 @@ void createCloth(Simulation *sim, unit x, unit y, unit w, unit h, int rx, int ry
 
 	sim->create<Glue>(grid[0][ry-1], *grid[0][ry-1]->x);
 	sim->create<Glue>(grid[rx-1][ry-1], *grid[rx-1][ry-1]->x);
+}
+
+//------------------------------------------------------------------------------
+
+void createBox(Simulation *sim, unit x, unit y, unit w, unit h, Texture *tex)
+{
+	ParticleBase *p1 = sim->addParticle(Vec(x, y));
+	ParticleBase *p2 = sim->addParticle(Vec(x+w, y));
+	ParticleBase *p3 = sim->addParticle(Vec(x+w, y+h));
+	ParticleBase *p4 = sim->addParticle(Vec(x, y+h));
+	
+	*p1->m = *p2->m = *p3->m = *p4->m = 1;
+	
+	unit d = Vec(w,h).length();
+	unit ks = -1000;
+	unit kd = -300;
+	
+	sim->create<Spring>(p1, p2, w, ks, kd);
+	sim->create<Spring>(p2, p3, h, ks, kd);
+	sim->create<Spring>(p3, p4, w, ks, kd);
+	sim->create<Spring>(p4, p1, h, ks, kd);
+	sim->create<Spring>(p1, p3, d, ks, kd);
+	sim->create<Spring>(p2, p4, d, ks, kd);
+	if (!tex)
+		sim->create<Quad>(p1, p2, p3, p4);
+	else
+		sim->create<Sheet>(p1, p2, p3, p4,
+			Vec(0.0, 0.0), Vec(1.0, 0.0),
+			Vec(1.0, 1.0), Vec(0.0, 1.0), tex);
 }
 
 //------------------------------------------------------------------------------
