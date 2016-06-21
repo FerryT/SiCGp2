@@ -78,7 +78,7 @@ std::ostream &operator <<(std::ostream &out, const ParticleBase &);
 
 //------------------------------------------------------------------------------
 
-class Particle : private ParticleBase
+class Particle : public ParticleBase
 {
 public:
 	Vec x, v, f;

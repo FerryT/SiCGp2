@@ -26,13 +26,15 @@ using namespace Base;
 class Integrator
 {
 public:
-	Integrator(Simulation &_sim) : sim(_sim), system(_sim.getSystem()) {}
+	Integrator(Simulation &_sim)
+		: sim(_sim), system(_sim.getSystem()), system2(_sim.getSystem2()) {}
 	virtual ~Integrator() {}
 	virtual void integrate(unit h) = 0;
 
 protected:
 	Simulation &sim;
 	ParticleSystem &system;
+	RigidSystem &system2;
 	
 	void saveState() { sim.saveState(); }
 	void restoreState() { sim.restoreState(); }

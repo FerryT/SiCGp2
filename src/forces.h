@@ -57,8 +57,8 @@ public:
 	Spring(ParticleBase *_p1, ParticleBase *_p2, unit _rest, const unit &_ks,
 		const unit &_kd) : p1(_p1), p2(_p2), rest(_rest), ks(_ks), kd(_kd) {}
 	
-	void draw();
-	void apply();
+	virtual void draw();
+	virtual void apply();
 };
 
 //------------------------------------------------------------------------------

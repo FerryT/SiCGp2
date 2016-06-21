@@ -15,6 +15,13 @@ void Euler::integrate(unit h)
 		system.x[i] += h * system.v[i];
 		system.v[i] += h * system.f[i] / system.m[i];
 	}
+	for (size_t i = 0; i < system2.size; ++i)
+	{
+		system2.x[i] += h * system2.v[i];
+		system2.v[i] += h * system2.f[i] / system2.m[i];
+		system2.o[i] = ~(system2.o[i] + h * (system2.w[i] ^ system2.o[i]));
+		system2.w[i] = ~(system2.w[i] + h * (system2.o[i] ^ system2.i[i] ^ system2.o[i].rep()));
+	}
 }
 
 //------------------------------------------------------------------------------

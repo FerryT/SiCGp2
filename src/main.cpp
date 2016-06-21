@@ -17,10 +17,13 @@
 #include "integrators.h"
 #include "fluid.h"
 #include "effects.h"
+#include "rigid.h"
 
 using namespace Sim;
 
 //------------------------------------------------------------------------------
+
+class MouseSpring;
 
 class Main : public Simulation
 {
@@ -34,7 +37,7 @@ public:
 	Fluid *fluid = NULL;
 	Texture *t1 = NULL;
 	Texture *t2 = NULL;
-	Entity *selected = NULL;
+	MouseSpring *selector = NULL;
 	
 	template <int I> void gotoScene();
 	
@@ -60,9 +63,29 @@ public:
 		instance->postact();
 	}
 
-private:
+	friend class MouseSpring;
+
+protected:
 	int scene = 1;
 	struct { int x, y, dx, dy; int down; } mouse;
+};
+
+class MouseSpring : public Spring
+{
+public:
+	Particle mouse;
+	Main *main;
+	ParticleBase *pb;
+	
+	MouseSpring(Main *m);
+	virtual ~MouseSpring();
+
+	void hook(ParticleBase *);
+	void hook(RigidBase *, Vec offset = Vec());
+	void unhook();
+	
+	virtual void draw();
+	virtual void apply();
 };
 
 Main *Main::instance = NULL;
@@ -85,7 +108,7 @@ int main(int argc, char *argv[])
 		Euler euler(sim);
 		MidPoint<Verlet> midpoint(sim);
 		RungeKutta4< RungeKutta4<Verlet> > superrunge(sim);
-		sim.integrator = &verlet;
+		sim.integrator = &euler;
 		
 		Texture texture1("cloth.raw", 477, 477);
 		sim.t1 = &texture1;
@@ -153,9 +176,10 @@ template <> void Main::gotoScene<5>()
 	Vec G(0, -10.0); G *= gravity;
 	int hd = HD ? 2 : 1;
 	fluid = create<Fluid>(this, 40 * hd, 30 * hd, 0.0001, 0.000001, G);
-	createBox(this, 0.4, 0.7, 0.2, 0.2, skin ? t2 : NULL);
-	createBox(this, 0.25, 0.4, 0.2, 0.2, skin ? t2 : NULL);
-	createBox(this, 0.55, 0.4, 0.2, 0.2, skin ? t2 : NULL);
+	//createBox(this, 0.4, 0.7, 0.2, 0.2, skin ? t2 : NULL);
+	//createBox(this, 0.25, 0.4, 0.2, 0.2, skin ? t2 : NULL);
+	//createBox(this, 0.55, 0.4, 0.2, 0.2, skin ? t2 : NULL);
+	addRigid<RigidBox>(0.2, Vec(0.4, 0.7), Vec(1.0, 0.0), 1.0, t2);
 	create<Borders>(this);
 	create<Collisions>(this);
 	//create<Gravity>(this, G, 0.0);
@@ -302,7 +326,9 @@ template <> void Main::gotoScene<0>()
 
 void Main::reset()
 {
+	selector = NULL;
 	clear();
+	selector = create<MouseSpring>(this);
 	gotoScene<0>();
 }
 
@@ -331,16 +357,6 @@ void Main::preact()
 
 void Main::postact()
 {
-	if (selected)
-	{
-		ParticleBase *pb = dynamic_cast<ParticleBase *> (selected);
-		if (pb)
-		{
-			*pb->x = getMouse();
-			*pb->v = Vec();
-			*pb->f = Vec();
-		}
-	}
 }
 
 //------------------------------------------------------------------------------
@@ -399,7 +415,8 @@ void Main::mousemove(const GUI::MouseEvent &event)
 void Main::mouseup(const GUI::MouseEvent &event)
 {
 	mouse.down = mouse.down & ~event.button;
-	selected = NULL;
+	if (selector)
+		selector->unhook();
 }
 
 void Main::mousedown(const GUI::MouseEvent &event)
@@ -408,11 +425,11 @@ void Main::mousedown(const GUI::MouseEvent &event)
 	mouse.y = event.y;
 	mouse.down |= event.button;
 	
-	if (event.button == GUI::MouseEvent::btnMiddle)
+	if (event.button == GUI::MouseEvent::btnLeft && selector)
 	{
 		Vec m = getMouse();
 		unit min = 1.0 / 0.0;
-		selected = NULL;
+		Entity *selected = NULL;
 		for (ParticleBase **pb = getParticles(); *pb; ++pb)
 		{
 			unit l = (*(**pb).x - m).length();
@@ -421,6 +438,24 @@ void Main::mousedown(const GUI::MouseEvent &event)
 				min = l;
 				selected = *pb;
 			}
+		}
+		for (RigidBase **rb = getRigids(); *rb; ++rb)
+		{
+			unit l = (*(**rb).x - m).length();
+			if (l < min)
+			{
+				min = l;
+				selected = *rb;
+			}
+		}
+		if (dynamic_cast<ParticleBase *> (selected))
+		{
+			selector->hook((ParticleBase *) selected);
+		}
+		else if (dynamic_cast<RigidBase *> (selected))
+		{
+			RigidBase *rb = (RigidBase *) selected;
+			selector->hook(rb, m - *rb->x);
 		}
 	}
 }
@@ -437,6 +472,63 @@ inline Vec Main::getMouse()
 inline Vec Main::normalPosition(int x, int y)
 {
 	return Vec((unit) x / (unit) width, -((unit) y / (unit) height));
+}
+
+//------------------------------------------------------------------------------
+
+MouseSpring::MouseSpring(Main *m)
+	: Spring(NULL, &mouse, 0.0, -3000.0, -1000.0), main(m), pb(NULL)
+{
+	mouse.m = .5;
+	pb = main->create<RigidParticle>();
+}
+
+MouseSpring::~MouseSpring()
+{
+}
+
+void MouseSpring::draw()
+{
+	if (!p1) return;
+	Spring::draw();
+}
+
+void MouseSpring::apply()
+{
+	if (!p1) return;
+	mouse.x = main->getMouse();
+	mouse.v = Vec();
+	mouse.f = Vec();
+	RigidParticle *rb = (RigidParticle *) pb;
+	if (rb->body)
+	{
+		*pb->x = *rb->body->x + (rb->offset ^ *rb->body->o);
+		*pb->v = Vec();
+	}
+	Spring::apply();
+}
+
+void MouseSpring::hook(ParticleBase *p)
+{
+	p1 = p;
+	((RigidParticle *) pb)->body = NULL;
+}
+
+void MouseSpring::hook(RigidBase *r, Vec offset)
+{
+	RigidParticle *rb = (RigidParticle *) pb;
+	rb->body = r;
+	rb->offset = offset;
+	*pb->x = main->getMouse();
+	*pb->v = Vec();
+	*pb->f = Vec();
+	p1 = pb;
+}
+
+void MouseSpring::unhook()
+{
+	p1 = NULL;
+	((RigidParticle *) pb)->body = NULL;
 }
 
 //------------------------------------------------------------------------------

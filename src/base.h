@@ -90,6 +90,10 @@ struct Vec2d : public Vector<2>
 		{ return Vec2d(-y, x); }
 	bool operator !() // Is zero
 		{ return x == 0.0 && y == 0.0; }
+	Vec2d operator ^(const Vec2d &v) const
+		{ return Vec2d(x * v.x - y * v.y, y * v.x + x * v.y); }
+	Vec2d rep()
+		{ return Vec2d(x, -y); }
 	unit angle() const;
 };
 
