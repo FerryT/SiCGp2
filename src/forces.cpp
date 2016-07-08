@@ -133,25 +133,25 @@ void Borders::apply()
 		if ((*p)->x->x < sim->bounds.left)
 		{
 			(*p)->x->x = sim->bounds.left;
-			(*p)->v->x *= -1;
+			(*p)->v->x *= -absorbtion;
 			(*p)->f->x = 0;
 		}
 		if ((*p)->x->x > sim->bounds.right)
 		{
 			(*p)->x->x = sim->bounds.right;
-			(*p)->v->x *= -1;
+			(*p)->v->x *= -absorbtion;
 			(*p)->f->x = 0;
 		}
 		if ((*p)->x->y > sim->bounds.bottom)
 		{
 			(*p)->x->y = sim->bounds.bottom;
-			(*p)->v->y *= -1;
+			(*p)->v->y *= -absorbtion;
 			(*p)->f->y = 0;
 		}
 		if ((*p)->x->y < sim->bounds.top)
 		{
 			(*p)->x->y = sim->bounds.top;
-			(*p)->v->y *= -1;
+			(*p)->v->y *= -absorbtion;
 			(*p)->f->y = 0;
 		}
 	}

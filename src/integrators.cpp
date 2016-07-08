@@ -17,10 +17,17 @@ void Euler::integrate(unit h)
 	}
 	for (size_t i = 0; i < system2.size; ++i)
 	{
+		unit I = system2.i[i] * system2.m[i]; // Inertia
 		system2.x[i] += h * system2.v[i];
 		system2.v[i] += h * system2.f[i] / system2.m[i];
-		system2.o[i] = ~(system2.o[i] + h * (system2.w[i] ^ system2.o[i]));
-		system2.w[i] = ~(system2.w[i] + h * (system2.o[i] ^ system2.i[i] ^ system2.o[i].rep()));
+		system2.o[i] += h * (system2.w[i] - system2.o[i]);
+		system2.w[i] += h * (system2.t[i] - system2.w[i]) / I;
+		
+		// Normalize orientation and angular velocity
+		// Expensive but unfortunately nesessary:
+		// without they become unstable due to inaccuracies
+		system2.o[i] = ~system2.o[i];
+		system2.w[i] = ~system2.w[i];
 	}
 }
 
@@ -33,6 +40,19 @@ void Verlet::integrate(unit h)
 		Vec oldX = system.x[i];
 		system.x[i] += (h * system.v[i]) + (h * h * system.f[i] / system.m[i]);
 		system.v[i] = (system.x[i] - oldX) / h;
+	}
+	for (size_t i = 0; i < system2.size; ++i)
+	{
+		unit I = system2.i[i] * system2.m[i]; // Inertia
+		Vec oldX = system2.x[i];
+		Vec oldO = system2.o[i];
+		system2.x[i] += (h * system2.v[i]) + (h * h * system2.f[i] / system2.m[i]);
+		system2.v[i] = (system2.x[i] - oldX) / h;
+		system2.o[i] += h * (system2.w[i] - system2.o[i]) + h * h * (system2.t[i] - system2.w[i]) / I;
+		system2.w[i] = (system2.o[i] - oldO) / h;
+		// Normalize rotations
+		system2.o[i] = ~system2.o[i];
+		system2.w[i] = ~system2.w[i];
 	}
 }
 

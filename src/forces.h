@@ -52,7 +52,7 @@ class Spring : public Force, public virtual Drawable
 public:
 	ParticleBase *p1, *p2;
 	unit rest;
-	const unit ks, kd;
+	unit ks, kd;
 	
 	Spring(ParticleBase *_p1, ParticleBase *_p2, unit _rest, const unit &_ks,
 		const unit &_kd) : p1(_p1), p2(_p2), rest(_rest), ks(_ks), kd(_kd) {}
@@ -100,8 +100,9 @@ class Borders : public Force
 {
 public:
 	Simulation *sim;
+	unit absorbtion;
 	
-	Borders(Simulation *_sim) : sim(_sim) {}
+	Borders(Simulation *_sim, unit a = 0.5) : sim(_sim), absorbtion(a) {}
 	
 	virtual void apply();
 };

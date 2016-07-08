@@ -66,16 +66,19 @@ public:
 	friend class MouseSpring;
 
 protected:
-	int scene = 1;
+	int scene = 5;
 	struct { int x, y, dx, dy; int down; } mouse;
 };
 
 class MouseSpring : public Spring
 {
 public:
-	Particle mouse;
+	ParticleBase *&mouse;
+	ParticleBase *&target;
+	ParticleBase *dummy;
+	RigidForce *rf;
+	Glue *mf;
 	Main *main;
-	ParticleBase *pb;
 	
 	MouseSpring(Main *m);
 	virtual ~MouseSpring();
@@ -179,10 +182,17 @@ template <> void Main::gotoScene<5>()
 	//createBox(this, 0.4, 0.7, 0.2, 0.2, skin ? t2 : NULL);
 	//createBox(this, 0.25, 0.4, 0.2, 0.2, skin ? t2 : NULL);
 	//createBox(this, 0.55, 0.4, 0.2, 0.2, skin ? t2 : NULL);
-	addRigid<RigidBox>(0.2, Vec(0.4, 0.7), Vec(1.0, 0.0), 1.0, t2);
+	RigidBase *rb = addRigid<RigidBox>(0.2, Vec(0.4, 0.7), Vec(1.0, 0.0), 1.0);
 	create<Borders>(this);
 	create<Collisions>(this);
 	//create<Gravity>(this, G, 0.0);
+	/**/
+	ParticleBase *p1 = addParticle(Vec(0.35, 0.65));
+	ParticleBase *p2 = addParticle(Vec(0.5, 0.5));
+	create<Glue>(p2, *p2->x);
+	create<RigidForce>(rb, p1);
+	create<Spring>(p1, p2, 0.223, -1000.0, -300.0);
+	/**/
 }
 
 //------------------------------------------------------------------------------
@@ -410,6 +420,8 @@ void Main::mousemove(const GUI::MouseEvent &event)
 	mouse.dy = event.y - mouse.y;
 	mouse.x = event.x;
 	mouse.y = event.y;
+	if (selector)
+		selector->mf->x = getMouse();
 }
 
 void Main::mouseup(const GUI::MouseEvent &event)
@@ -425,20 +437,14 @@ void Main::mousedown(const GUI::MouseEvent &event)
 	mouse.y = event.y;
 	mouse.down |= event.button;
 	
+	if (selector)
+		selector->mf->x = getMouse();
+	
 	if (event.button == GUI::MouseEvent::btnLeft && selector)
 	{
 		Vec m = getMouse();
 		unit min = 1.0 / 0.0;
 		Entity *selected = NULL;
-		for (ParticleBase **pb = getParticles(); *pb; ++pb)
-		{
-			unit l = (*(**pb).x - m).length();
-			if (l < min)
-			{
-				min = l;
-				selected = *pb;
-			}
-		}
 		for (RigidBase **rb = getRigids(); *rb; ++rb)
 		{
 			unit l = (*(**rb).x - m).length();
@@ -448,6 +454,17 @@ void Main::mousedown(const GUI::MouseEvent &event)
 				selected = *rb;
 			}
 		}
+		for (ParticleBase **pb = getParticles(); *pb; ++pb)
+		{
+			if (selector && (*pb == selector->mouse || *pb == selector->dummy))
+				continue;
+			unit l = (*(**pb).x - m).length();
+			if (l < min)
+			{
+				min = l;
+				selected = *pb;
+			}
+		}
 		if (dynamic_cast<ParticleBase *> (selected))
 		{
 			selector->hook((ParticleBase *) selected);
@@ -455,7 +472,7 @@ void Main::mousedown(const GUI::MouseEvent &event)
 		else if (dynamic_cast<RigidBase *> (selected))
 		{
 			RigidBase *rb = (RigidBase *) selected;
-			selector->hook(rb, m - *rb->x);
+			selector->hook(rb, (m - *rb->x) ^ rb->o->rep());
 		}
 	}
 }
@@ -477,10 +494,13 @@ inline Vec Main::normalPosition(int x, int y)
 //------------------------------------------------------------------------------
 
 MouseSpring::MouseSpring(Main *m)
-	: Spring(NULL, &mouse, 0.0, -3000.0, -1000.0), main(m), pb(NULL)
+	: Spring(NULL, NULL, 0.0, -1000.0, -300.0), main(m), mouse(p1), target(p2)
 {
-	mouse.m = .5;
-	pb = main->create<RigidParticle>();
+	mouse = main->addParticle(main->getMouse());
+	target = NULL;
+	mf = main->create<Glue>(mouse, main->getMouse());
+	dummy = main->addParticle(main->bounds.left);
+	rf = main->create<RigidForce>(((RigidBase *) 0), dummy);
 }
 
 MouseSpring::~MouseSpring()
@@ -489,46 +509,37 @@ MouseSpring::~MouseSpring()
 
 void MouseSpring::draw()
 {
-	if (!p1) return;
+	if (!target) return;
 	Spring::draw();
 }
 
 void MouseSpring::apply()
 {
-	if (!p1) return;
-	mouse.x = main->getMouse();
-	mouse.v = Vec();
-	mouse.f = Vec();
-	RigidParticle *rb = (RigidParticle *) pb;
-	if (rb->body)
-	{
-		*pb->x = *rb->body->x + (rb->offset ^ *rb->body->o);
-		*pb->v = Vec();
-	}
+	if (!target) return;
 	Spring::apply();
 }
 
 void MouseSpring::hook(ParticleBase *p)
 {
-	p1 = p;
-	((RigidParticle *) pb)->body = NULL;
+	target = p;
+	rf->body = NULL;
+	*dummy->x = main->bounds.left;
+	*dummy->v = 0;
 }
 
 void MouseSpring::hook(RigidBase *r, Vec offset)
 {
-	RigidParticle *rb = (RigidParticle *) pb;
-	rb->body = r;
-	rb->offset = offset;
-	*pb->x = main->getMouse();
-	*pb->v = Vec();
-	*pb->f = Vec();
-	p1 = pb;
+	target = dummy;
+	rf->body = r;
+	rf->offset = offset;
 }
 
 void MouseSpring::unhook()
 {
-	p1 = NULL;
-	((RigidParticle *) pb)->body = NULL;
+	target = NULL;
+	rf->body = NULL;
+	*dummy->x = main->bounds.left;
+	*dummy->v = 0;
 }
 
 //------------------------------------------------------------------------------

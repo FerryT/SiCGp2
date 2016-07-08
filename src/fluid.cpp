@@ -145,7 +145,9 @@ int collidingCell(Fluid &fluid, int i, int j, unit x, unit y)
 		m = IX((int) x, (int) y);
 		if (fluid.p[m])
 		{
-			*fluid.p[m]->f += Vec(fluid.u[m], fluid.v[m]) * fluid.d[m];
+			//*fluid.p[m]->f += Vec(fluid.u[m], fluid.v[m]) * fluid.d[m];
+			ParticleBase *p = fluid.p[m];
+			*p->f += (Vec(fluid.u[m], fluid.v[m]) - *p->v) * fluid.d[m];
 			return m;
 		}
 		x += di;

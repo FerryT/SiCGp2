@@ -5,6 +5,7 @@
 #include <ostream>
 #include <vector>
 
+#include "fluid.h"
 #include "sim.h"
 #include "integrators.h"
 
@@ -42,6 +43,12 @@ Simulation::~Simulation()
 
 void Simulation::manage(Entity *ent)
 {
+	if (dynamic_cast<Fluid *> (ent) && !data->entities.empty())
+	{
+		data->entities.push_back(data->entities[0]);
+		data->entities[0] = ent;
+		return;	
+	}
 	data->entities.push_back(ent);
 	Quad *q = dynamic_cast<Quad *> (ent);
 	if (q)
@@ -75,7 +82,7 @@ RigidBase *Simulation::manage(RigidBody *r)
 	data->system2.w.push_back(r->w);
 	data->system2.t.push_back(r->t);
 	data->system2.m.push_back(r->m);
-	data->system2.i.push_back(r->m * r->body());
+	data->system2.i.push_back(r->body());
 	++data->system2.size;
 	data->entities.push_back(r);
 	data->rigids.back() = r;

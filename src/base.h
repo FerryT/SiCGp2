@@ -83,17 +83,20 @@ struct Vec2d : public Vector<2>
 	unit operator *(const Vec2d &v) const // Dot product!
 		{ return x * v.x + y * v.y; }
 	Vec2d operator ~() const // Normalize!
-		{ unit l = length(); return Vec2d(x / l, y / l); }
+		{ if (!*this) return Vec2d();
+		  unit l = length(); return Vec2d(x / l, y / l); }
 	Vec2d rotR() const
 		{ return Vec2d(y, -x); }
 	Vec2d rotL() const
 		{ return Vec2d(-y, x); }
-	bool operator !() // Is zero
+	bool operator !() const // Is zero
 		{ return x == 0.0 && y == 0.0; }
 	Vec2d operator ^(const Vec2d &v) const
 		{ return Vec2d(x * v.x - y * v.y, y * v.x + x * v.y); }
-	Vec2d rep()
-		{ return Vec2d(x, -y); }
+	Vec2d rep() const
+		{ return Vec2d(x, -y); } // Assuming v is normalized
+		/*{ if (!*this) return Vec2d();
+		  unit l2 = length2(); return Vec2d(x / l2, -y / l2); }*/
 	unit angle() const;
 };
 

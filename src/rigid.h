@@ -50,8 +50,8 @@ public:
 
 struct RigidSystem
 {
-	Vecs x, v, f, o, w, t, i;
-	units m;
+	Vecs x, v, f, o, w, t;
+	units m, i;
 	size_t size;
 	RigidSystem() : x(), v(), f(), o(), w(), t(), m(), i(), size(0) {}
 };
@@ -74,20 +74,21 @@ public:
 
 //------------------------------------------------------------------------------
 
-class RigidParticle : public Particle, virtual public Appliable
+// Couples a particle to a rigid body, make sure this is created BEFORE any
+// entities that applies forces to the particle; the order matters!
+
+class RigidForce : public Entity, virtual public Appliable, virtual public Actor
 {
 public:
 	RigidBase *body;
+	ParticleBase *p;
 	Vec offset;
-
-	RigidParticle(RigidBase *rb = NULL, Vec o = Vec())
-		: body(rb), offset(o), s(~o), l(o.length()) {}
-
-	void apply();
-
-private:
-	Vec s;
-	unit l;
+	
+	RigidForce(RigidBase *, ParticleBase *, Vec _offset = Vec());
+	
+	//virtual void draw();
+	virtual void apply();
+	virtual void act(unit h); // Redirect forces to the rigid body
 };
 
 //------------------------------------------------------------------------------
