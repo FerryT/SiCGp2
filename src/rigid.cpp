@@ -17,10 +17,11 @@ void RigidBox::draw()
 {
 	RigidBase *rb = this;
 	const unit cs = size / 2.0;
-	Vec c00 =  (Vec(-cs, -cs) ^ *rb->o) + *rb->x;
-	Vec c01 =  (Vec(-cs,  cs) ^ *rb->o) + *rb->x;
-	Vec c10 =  (Vec( cs, -cs) ^ *rb->o) + *rb->x;
-	Vec c11 =  (Vec( cs,  cs) ^ *rb->o) + *rb->x;
+	Vec n = Vec::fromAngle(*rb->o);
+	Vec c00 =  (Vec(-cs, -cs) ^ n) + *rb->x;
+	Vec c01 =  (Vec(-cs,  cs) ^ n) + *rb->x;
+	Vec c10 =  (Vec( cs, -cs) ^ n) + *rb->x;
+	Vec c11 =  (Vec( cs,  cs) ^ n) + *rb->x;
 	if (tex)
 	{
 		glEnable(GL_TEXTURE_2D);
@@ -61,15 +62,15 @@ void RigidBox::draw()
 		// Orientation
 		glColor3dv(blue);
 		glVertex2dv(rb->x->data);
-		glVertex2dv((*rb->x + *rb->o * 0.1).data);
+		glVertex2dv((*rb->x + Vec::fromAngle(*rb->o) * 0.1).data);
 		// Angular velocity
-		glColor3dv(green);
-		glVertex2dv(rb->x->data);
-		glVertex2dv((*rb->x + *rb->w * 0.1).data);
+		//glColor3dv(green);
+		//glVertex2dv(rb->x->data);
+		//glVertex2dv((*rb->x + Vec::fromAngle(*rb->w) * 0.1).data);
 		// Torque
-		glColor3dv(red);
-		glVertex2dv(rb->x->data);
-		glVertex2dv((*rb->x + *rb->t * 0.1).data);
+		//glColor3dv(red);
+		//glVertex2dv(rb->x->data);
+		//glVertex2dv((*rb->x + Vec::fromAngle(*rb->t) * 0.1).data);
 		glEnd();
 	}
 }
@@ -84,7 +85,7 @@ RigidForce::RigidForce(RigidBase *rb, ParticleBase *pb, Vec o)
 }
 
 //------------------------------------------------------------------------------
-/*
+
 void RigidForce::draw()
 {
 	if (!body) return;
@@ -92,17 +93,17 @@ void RigidForce::draw()
 	glBegin(GL_LINES);
 	glColor3dv(color);
 	glVertex2dv(p->x->data);
-	glVertex2dv((*p->x + *p->v * .1).data);
+	glVertex2dv((*p->x + *p->v).data);
 	glEnd();
 }
-*/
+
 //------------------------------------------------------------------------------
 
 void RigidForce::apply()
 {
 	if (!body) return;
-	*p->x = *body->x + (offset ^ *body->o);
-	*p->v = *body->v + (offset ^ *body->w);
+	*p->x = *body->x + (offset ^ Vec::fromAngle(*body->o));
+	*p->v = *body->v + (Vec::fromAngle(*body->w) & (*p->x - *body->x));
 }
 
 //------------------------------------------------------------------------------
@@ -111,7 +112,7 @@ void RigidForce::act(unit h)
 {
 	if (!body) return;
 	*body->f += *p->f;
-	*body->t += *p->f ^ offset.rep();
+	*body->t += (*p->x - *body->x) & *p->f;
 }
 
 //------------------------------------------------------------------------------

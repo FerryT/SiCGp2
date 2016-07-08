@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
 		Euler euler(sim);
 		MidPoint<Verlet> midpoint(sim);
 		RungeKutta4< RungeKutta4<Verlet> > superrunge(sim);
-		sim.integrator = &euler;
+		sim.integrator = &verlet;
 		
 		Texture texture1("cloth.raw", 477, 477);
 		sim.t1 = &texture1;
@@ -182,12 +182,12 @@ template <> void Main::gotoScene<5>()
 	//createBox(this, 0.4, 0.7, 0.2, 0.2, skin ? t2 : NULL);
 	//createBox(this, 0.25, 0.4, 0.2, 0.2, skin ? t2 : NULL);
 	//createBox(this, 0.55, 0.4, 0.2, 0.2, skin ? t2 : NULL);
-	RigidBase *rb = addRigid<RigidBox>(0.2, Vec(0.4, 0.7), Vec(1.0, 0.0), 1.0);
+	RigidBase *rb = addRigid<RigidBox>(0.2, Vec(0.4, 0.7), 0.0, 10.0);
 	create<Borders>(this);
 	create<Collisions>(this);
 	//create<Gravity>(this, G, 0.0);
-	/**/
-	ParticleBase *p1 = addParticle(Vec(0.35, 0.65));
+	/** /
+	ParticleBase *p1 = addParticle(Vec(0.4, 0.7));
 	ParticleBase *p2 = addParticle(Vec(0.5, 0.5));
 	create<Glue>(p2, *p2->x);
 	create<RigidForce>(rb, p1);
@@ -472,7 +472,7 @@ void Main::mousedown(const GUI::MouseEvent &event)
 		else if (dynamic_cast<RigidBase *> (selected))
 		{
 			RigidBase *rb = (RigidBase *) selected;
-			selector->hook(rb, (m - *rb->x) ^ rb->o->rep());
+			selector->hook(rb, (m - *rb->x) ^ Vec::fromAngle(-*rb->o));
 		}
 	}
 }

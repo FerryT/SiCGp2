@@ -44,6 +44,8 @@ void Gravity::apply()
 {
 	for (ParticleBase **p = sim->getParticles(); *p; ++p)
 		*(**p).f += *(**p).m * g;
+	for (RigidBase **r = sim->getRigids(); *r; ++r)
+		*(**r).f += *(**r).m * g;
 }
 
 //------------------------------------------------------------------------------

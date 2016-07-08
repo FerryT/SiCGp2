@@ -82,6 +82,8 @@ struct Vec2d : public Vector<2>
 		{ return x * x + y * y; }
 	unit operator *(const Vec2d &v) const // Dot product!
 		{ return x * v.x + y * v.y; }
+	unit operator &(const Vec2d &v) const // Cross product!
+		{ return x * v.y - y * v.x; }
 	Vec2d operator ~() const // Normalize!
 		{ if (!*this) return Vec2d();
 		  unit l = length(); return Vec2d(x / l, y / l); }
@@ -98,6 +100,8 @@ struct Vec2d : public Vector<2>
 		/*{ if (!*this) return Vec2d();
 		  unit l2 = length2(); return Vec2d(x / l2, -y / l2); }*/
 	unit angle() const;
+	
+	static Vec2d fromAngle(unit a);
 };
 
 static inline Vec2d operator +(unit s, const Vec2d &v)

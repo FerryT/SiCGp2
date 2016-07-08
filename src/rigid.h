@@ -23,10 +23,9 @@ class RigidBase : public Entity
 {
 public:
 	Vec *x, *v, *f;
-	Vec *o, *w, *t;
-	unit *m;
+	unit *o, *w, *t, *m;
 
-	RigidBase(Vec *_x, Vec *_v, Vec *_f, Vec *_o, Vec *_w, Vec *_t, unit *_m)
+	RigidBase(Vec *_x, Vec *_v, Vec *_f, unit *_o, unit *_w, unit *_t, unit *_m)
 		: x(_x), v(_v), f(_f), o(_o), w(_w), t(_t), m(_m) {}
 	virtual ~RigidBase() {}
 	virtual unit body() { return 1.0; }
@@ -38,10 +37,10 @@ class RigidBody : public RigidBase
 {
 public:
 	Vec x, v, f;
-	Vec o, w, t; // Orientation, angular velocity, torque
+	unit o, w, t; // Orientation, angular velocity, torque
 	unit m;
 
-	RigidBody(Vec _x = Vec(), Vec _o = Vec(1.0, 0.0), unit _m = 1.0)
+	RigidBody(Vec _x = Vec(), unit _o = 0.0, unit _m = 1.0)
 		: RigidBase(&x, &v, &f, &o, &w, &t, &m), x(_x), o(_o), m(_m) {}
 	virtual ~RigidBody() {}
 };
@@ -50,8 +49,8 @@ public:
 
 struct RigidSystem
 {
-	Vecs x, v, f, o, w, t;
-	units m, i;
+	Vecs x, v, f;
+	units o, w, t, m, i;
 	size_t size;
 	RigidSystem() : x(), v(), f(), o(), w(), t(), m(), i(), size(0) {}
 };
@@ -65,7 +64,7 @@ public:
 	unit size;
 	Texture *tex;
 	
-	RigidBox(unit _size, Vec x, Vec o = Vec(1.0, 0.0), unit m = 1.0, Texture *_tex = 0)
+	RigidBox(unit _size, Vec x, unit o = 0.0, unit m = 1.0, Texture *_tex = 0)
 		: RigidBody(x, o, m), size(_size), tex(_tex) {}
 	
 	void draw();
@@ -77,7 +76,7 @@ public:
 // Couples a particle to a rigid body, make sure this is created BEFORE any
 // entities that applies forces to the particle; the order matters!
 
-class RigidForce : public Entity, virtual public Appliable, virtual public Actor
+class RigidForce : public Entity, /*virtual public Drawable,*/ virtual public Appliable, virtual public Actor
 {
 public:
 	RigidBase *body;
@@ -86,7 +85,7 @@ public:
 	
 	RigidForce(RigidBase *, ParticleBase *, Vec _offset = Vec());
 	
-	//virtual void draw();
+	virtual void draw();
 	virtual void apply();
 	virtual void act(unit h); // Redirect forces to the rigid body
 };

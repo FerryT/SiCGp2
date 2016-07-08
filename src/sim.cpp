@@ -144,7 +144,7 @@ void Simulation::calcForces()
 	// Reset forces
 	std::fill(data->system.f.begin(), data->system.f.end(), Vec());
 	std::fill(data->system2.f.begin(), data->system2.f.end(), Vec());
-	std::fill(data->system2.t.begin(), data->system2.t.end(), Vec());
+	std::fill(data->system2.t.begin(), data->system2.t.end(), 0.0);
 	// Apply forces
 	for (Entity *ent : data->entities)
 		if (dynamic_cast<Appliable *> (ent))
