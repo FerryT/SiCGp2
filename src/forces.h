@@ -102,14 +102,13 @@ public:
 	Simulation *sim;
 	unit absorbtion;
 	
-	Borders(Simulation *_sim, unit a = 0.5) : sim(_sim), absorbtion(a) {}
+	Borders(Simulation *_sim, unit a = 0.2) : sim(_sim), absorbtion(a) {}
 	
 	virtual void apply();
 };
 
 //------------------------------------------------------------------------------
 
-/* *** Experimental *** */
 class Collisions : public Force
 {
 public:

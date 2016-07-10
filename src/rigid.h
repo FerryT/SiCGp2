@@ -66,6 +66,7 @@ public:
 	
 	RigidBox(unit _size, Vec x, unit o = 0.0, unit m = 1.0, Texture *_tex = 0)
 		: RigidBody(x, o, m), size(_size), tex(_tex) {}
+	virtual ~RigidBox() {}
 	
 	void draw();
 	virtual unit body() { return (size * size) / 6.0; }
@@ -76,7 +77,7 @@ public:
 // Couples a particle to a rigid body, make sure this is created BEFORE any
 // entities that applies forces to the particle; the order matters!
 
-class RigidForce : public Entity, /*virtual public Drawable,*/ virtual public Appliable, virtual public Actor
+class RigidForce : public Entity, virtual public Appliable, virtual public Actor
 {
 public:
 	RigidBase *body;
@@ -85,7 +86,6 @@ public:
 	
 	RigidForce(RigidBase *, ParticleBase *, Vec _offset = Vec());
 	
-	virtual void draw();
 	virtual void apply();
 	virtual void act(unit h); // Redirect forces to the rigid body
 };

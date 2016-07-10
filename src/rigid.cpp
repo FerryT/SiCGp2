@@ -8,6 +8,7 @@
 
 #include "effects.h"
 #include "rigid.h"
+#include "fluid.h"
 
 namespace Sim {
 
@@ -73,6 +74,15 @@ void RigidBox::draw()
 		//glVertex2dv((*rb->x + Vec::fromAngle(*rb->t) * 0.1).data);
 		glEnd();
 	}
+	if (Fluid::VelocityMode)
+	{
+		static const double cyan[3] = {0.0, 1.0, 1.0};
+		glBegin(GL_LINES);
+		glColor3dv(cyan);
+		glVertex2dv(rb->x->data);
+		glVertex2dv((*rb->x + *rb->v).data);
+		glEnd();
+	}
 }
 
 //------------------------------------------------------------------------------
@@ -82,19 +92,6 @@ RigidForce::RigidForce(RigidBase *rb, ParticleBase *pb, Vec o)
 {
 	if (!o && rb)
 		offset = *pb->x - *rb->x;
-}
-
-//------------------------------------------------------------------------------
-
-void RigidForce::draw()
-{
-	if (!body) return;
-	static const double color[3] = {0.0, 1.0, 1.0};
-	glBegin(GL_LINES);
-	glColor3dv(color);
-	glVertex2dv(p->x->data);
-	glVertex2dv((*p->x + *p->v).data);
-	glEnd();
 }
 
 //------------------------------------------------------------------------------

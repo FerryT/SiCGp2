@@ -21,14 +21,17 @@ namespace Sim {
 class Fluid : public Entity, virtual public Drawable, virtual public Actor
 {
 public:
+	static bool VelocityMode;
+	
 	Simulation *sim;
 	const int width, height;
 	unit visc, diff;
+	unit speed;
 	Vec g;
 	unit *u, *u_old; // velocity x
 	unit *v, *v_old; // velocity y
 	unit *d, *d_old; // density
-	ParticleBase **p; // Particles (or not)
+	Entity **p; // Particles (or not)
 	struct
 	{
 		Vec pos;
@@ -36,11 +39,10 @@ public:
 		Vec v;
 	} mouse;
 	
-	Fluid(Simulation *sim, int width, int height, unit visc = 0.0, unit diff = 0.0, Vec g = Vec());
+	Fluid(Simulation *sim, int width, int height, unit visc = 0.0, unit diff = 0.0, Vec g = Vec(), unit speed = 1.0);
 	~Fluid();
 	
 	void draw();
-	//void apply();
 	void act(unit dt);
 
 private:

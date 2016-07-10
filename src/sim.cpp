@@ -124,6 +124,7 @@ void Simulation::update_pointers2()
 		data->rigids[i]->w = &w[i];
 		data->rigids[i]->t = &t[i];
 		data->rigids[i]->m = &m[i];
+		data->system2.i[i]= data->rigids[i]->body();
 	}
 }
 

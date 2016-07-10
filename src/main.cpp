@@ -37,6 +37,7 @@ public:
 	Fluid *fluid = NULL;
 	Texture *t1 = NULL;
 	Texture *t2 = NULL;
+	Texture *t3 = NULL;
 	MouseSpring *selector = NULL;
 	
 	template <int I> void gotoScene();
@@ -111,12 +112,15 @@ int main(int argc, char *argv[])
 		Euler euler(sim);
 		MidPoint<Verlet> midpoint(sim);
 		RungeKutta4< RungeKutta4<Verlet> > superrunge(sim);
+		
 		sim.integrator = &verlet;
 		
 		Texture texture1("cloth.raw", 477, 477);
 		sim.t1 = &texture1;
 		Texture texture2("box.raw", 487, 400);
 		sim.t2 = &texture2;
+		Texture texture3("safe.raw", 400, 400);
+		sim.t3 = &texture3;
 		
 		GUI::Run(Main::Frame);
 	}
@@ -133,7 +137,7 @@ template <> void Main::gotoScene<1>()
 	
 	Vec G(0, -10.0); G *= gravity;
 	int hd = HD ? 2 : 1;
-	fluid = create<Fluid>(this, 40 * hd, 30 * hd, 0.0001, 0.000001, G);
+	fluid = create<Fluid>(this, 80 * hd, 60 * hd, 0.0001, 0.000001, G);
 }
 
 template <> void Main::gotoScene<2>()
@@ -143,7 +147,7 @@ template <> void Main::gotoScene<2>()
 	
 	Vec G(0, -1.0); G *= gravity;
 	int hd = HD ? 2 : 1;
-	fluid = create<Fluid>(this, 40 * hd, 30 * hd, 0.0001, 0.000001, G);
+	fluid = create<Fluid>(this, 80 * hd, 60 * hd, 0.0001, 0.000001, G);
 	createCloth(this, 0.25, 0.25, .5, .5, 5 * hd, 5 * hd, -1000, -100,
 		skin ? t1 : NULL);
 	create<Gravity>(this, G, 0.0);
@@ -155,8 +159,11 @@ template <> void Main::gotoScene<3>()
 		"LMB/RMB: as before\tMMB: manipulate box\n";
 	Vec G(0, -10.0); G *= gravity;
 	int hd = HD ? 2 : 1;
-	fluid = create<Fluid>(this, 40 * hd, 30 * hd, 0.0001, 0.000001, G);
+	fluid = create<Fluid>(this, 80 * hd, 60 * hd, 0.0001, 0.000001, G);
 	createBox(this, 0.4, 0.5, 0.2, 0.2, skin ? t2 : NULL);
+	createBox(this, 0.3, 0.75, 0.2, 0.2, skin ? t2 : NULL);
+	createBox(this, 0.75, 0.3, 0.2, 0.2, skin ? t2 : NULL);
+	create<Collisions>(this);
 	create<Borders>(this);
 }
 
@@ -165,7 +172,7 @@ template <> void Main::gotoScene<4>()
 	std::cout << "[Scene 4] Water slide\n";
 	Vec G(0, -1.0); G *= gravity;
 	int hd = HD ? 2 : 1;
-	fluid = create<Fluid>(this, 40 * hd, 30 * hd, 0.0001, 0.000001, G);
+	fluid = create<Fluid>(this, 80 * hd, 60 * hd, 0.0001, 0.000001, G, 1.0);
 	createRibbon(this, 0.3, 0.7, 1.0, 0.9, 0.05, 6);
 	createRibbon(this, -0.1, 0.8, 0.3, 0.5, 0.05, 5);
 	createRibbon(this, 0.2, 0.4, 0.4, 0.4, 0.1, 4);
@@ -178,14 +185,16 @@ template <> void Main::gotoScene<5>()
 	std::cout << "[Scene 5] Collisions\n";
 	Vec G(0, -10.0); G *= gravity;
 	int hd = HD ? 2 : 1;
-	fluid = create<Fluid>(this, 40 * hd, 30 * hd, 0.0001, 0.000001, G);
+	fluid = create<Fluid>(this, 80 * hd, 60 * hd, 0.0001, 0.000001, G, 10.0);
 	//createBox(this, 0.4, 0.7, 0.2, 0.2, skin ? t2 : NULL);
 	//createBox(this, 0.25, 0.4, 0.2, 0.2, skin ? t2 : NULL);
 	//createBox(this, 0.55, 0.4, 0.2, 0.2, skin ? t2 : NULL);
-	RigidBase *rb = addRigid<RigidBox>(0.2, Vec(0.4, 0.7), 0.0, 10.0);
+	RigidBase *rb = addRigid<RigidBox>(0.2, Vec(0.4, 0.7), 0.0, 10.0, skin ? t3 : NULL);
+	addRigid<RigidBox>(0.2, Vec(0.25, 0.4), 0.0, 1.0, skin ? t3 : NULL);
+	addRigid<RigidBox>(0.2, Vec(0.55, 0.4), 0.0, 100.0, skin ? t3 : NULL);
 	create<Borders>(this);
 	create<Collisions>(this);
-	//create<Gravity>(this, G, 0.0);
+	create<Gravity>(this, G, 0.0);
 	/** /
 	ParticleBase *p1 = addParticle(Vec(0.4, 0.7));
 	ParticleBase *p2 = addParticle(Vec(0.5, 0.5));
@@ -346,19 +355,23 @@ void Main::reset()
 
 void Main::preact()
 {
-	if (fluid)
+	unit hd = (HD ? 4.0 : 1.0);
+	if (fluid && (!selector || !selector->target))
 	{
 		fluid->mouse.pos = Vec(0.0, 1.0) + normalPosition(mouse.x, mouse.y);
 		if (mouse.down & GUI::MouseEvent::btnLeft)
-			fluid->mouse.v = normalPosition(mouse.dx, mouse.dy) * 1000000.0;
+			fluid->mouse.v = normalPosition(mouse.dx, mouse.dy) * 1000000.0 * hd;
 		if (mouse.down & GUI::MouseEvent::btnRight)
 		{
-			if (scene == 2)
-				fluid->mouse.v = Vec(300.0,0.0);
 			if (mouse.down & GUI::MouseEvent::btnLeft)
-				fluid->mouse.d = -1000.0;
+				fluid->mouse.d = -1000.0 * hd;
 			else
-				fluid->mouse.d = 1000.0;
+				fluid->mouse.d = 1000.0 * hd;
+			if (scene == 2)
+			{
+				fluid->mouse.v += Vec(3000.0 * hd, 0.0);
+				fluid->mouse.d *= 10.0;
+			}
 		}
 	}
 }
@@ -409,6 +422,10 @@ void Main::keypress(unsigned char key)
 		case 'P':
 			std::cout << getMouse() << std::endl;
 			break;
+		
+		case 'V':
+			Fluid::VelocityMode = !Fluid::VelocityMode;
+			break;
 	}
 }
 
@@ -443,7 +460,7 @@ void Main::mousedown(const GUI::MouseEvent &event)
 	if (event.button == GUI::MouseEvent::btnLeft && selector)
 	{
 		Vec m = getMouse();
-		unit min = 1.0 / 0.0;
+		unit min = 0.2;
 		Entity *selected = NULL;
 		for (RigidBase **rb = getRigids(); *rb; ++rb)
 		{
@@ -454,6 +471,7 @@ void Main::mousedown(const GUI::MouseEvent &event)
 				selected = *rb;
 			}
 		}
+		min = 0.1;
 		for (ParticleBase **pb = getParticles(); *pb; ++pb)
 		{
 			if (selector && (*pb == selector->mouse || *pb == selector->dummy))

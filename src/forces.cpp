@@ -14,6 +14,95 @@ using namespace Base;
 
 //------------------------------------------------------------------------------
 
+template <int N, int M>
+unit SAT_axis(Vec A[N], Vec B[M], Vec axis)
+{
+	unit amin = 1.0 / 0.0;
+	unit amax = -1.0 / 0.0;
+	for (int i = 0; i < N; ++i)
+	{
+		unit a = axis * A[i];
+		if (a < amin) amin = a;
+		if (a > amax) amax = a;
+	}
+	unit bmin = 1.0 / 0.0;
+	unit bmax = -1.0 / 0.0;
+	for (int i = 0; i < M; ++i)
+	{
+		unit b = axis * B[i];
+		if (b < bmin) bmin = b;
+		if (b > bmax) bmax = b;
+	}
+	unit min = amin > bmin ? amin : bmin;
+	unit max = amax < bmax ? amax : bmax;
+	return max - min;
+}
+
+template <int N, int M>
+std::pair<Vec,unit> SAT(Vec A[N], Vec B[M])
+{
+	unit overlap = 1.0 / 0.0;
+	Vec dir;
+	for (int i = 0; i < N; ++i)
+	{
+		Vec u = A[i];
+		Vec v = A[(i + 1) % N];
+		Vec axis = ~(v - u).rotR();
+		unit o = SAT_axis<N,M>(A, B, axis);
+		if (o < overlap)
+		{
+			dir = -axis;
+			overlap = o;
+		}
+	}
+	for (int i = 0; i < M; ++i)
+	{
+		Vec u = B[i];
+		Vec v = B[(i + 1) % M];
+		Vec axis = ~(u - v).rotR();
+		unit o = SAT_axis<N,M>(A, B, axis);
+		if (o < overlap)
+		{
+			dir = axis;
+			overlap = o;
+		}
+	}
+	return std::pair<Vec,unit>(dir, overlap);
+}
+
+void makePolygon(Vec polygon[], const Quad &q)
+{
+	polygon[0] = *q.p1->x;
+	polygon[1] = *q.p2->x;
+	polygon[2] = *q.p3->x;
+	polygon[3] = *q.p4->x;
+}
+
+void makePolygon(Vec polygon[], const RigidBase &r)
+{
+	const RigidBox *rb = dynamic_cast<const RigidBox *> (&r);
+	unit cs = 1.0;
+	if (rb) cs = rb->size / 2.0;
+	Vec n = Vec::fromAngle(*r.o);
+	polygon[0] = (Vec(-cs, -cs) ^ n) + *r.x;
+	polygon[1] = (Vec(-cs,  cs) ^ n) + *r.x;
+	polygon[2] = (Vec( cs,  cs) ^ n) + *r.x;
+	polygon[3] = (Vec( cs, -cs) ^ n) + *r.x;
+}
+
+template <typename T, typename U>
+std::pair<Vec,unit> SAT(const T &a, const U &b)
+{
+	const Vec nan = Vec(0.0 / 0.0, 0.0 / 0.0);
+	Vec A[4] = {nan,nan,nan,nan};
+	Vec B[4] = {nan,nan,nan,nan};
+	makePolygon(A, a);
+	makePolygon(B, b);
+	return SAT<4,4>(A, B);
+}
+
+//------------------------------------------------------------------------------
+
 void Gravity::draw()
 {
 	Vec pos = origin + g;
@@ -45,7 +134,17 @@ void Gravity::apply()
 	for (ParticleBase **p = sim->getParticles(); *p; ++p)
 		*(**p).f += *(**p).m * g;
 	for (RigidBase **r = sim->getRigids(); *r; ++r)
-		*(**r).f += *(**r).m * g;
+	{
+		Vec P[4];
+		makePolygon(P, **r);
+		Vec f = *(**r).m * g;
+		*(**r).f += f;
+		for (int i = 0; i < 4; ++i)
+		{
+			if (P[i].y < (*r)->x->y)
+				*(**r).t += (P[i] - *(**r).x) & f;
+		}
+	}
 }
 
 //------------------------------------------------------------------------------
@@ -157,80 +256,128 @@ void Borders::apply()
 			(*p)->f->y = 0;
 		}
 	}
+	for (RigidBase **r = sim->getRigids(); *r; ++r)
+	{
+		Vec P[4];
+		makePolygon(P, **r);
+		for (int i = 0; i < 4; ++i)
+		{
+			Vec p = P[i];
+			if (p.x < sim->bounds.left)
+			{
+				Vec f = Vec(sim->bounds.left - p.x, 0);
+				*(*r)->x += f;
+				*(*r)->v *= -absorbtion;
+				*(*r)->f = 0;
+				*(*r)->w *= -absorbtion;
+				*(*r)->t = 0;
+			}
+			if (p.x > sim->bounds.right)
+			{
+				Vec f = Vec(sim->bounds.right - p.x, 0);
+				*(*r)->x += f;
+				*(*r)->v *= -absorbtion;
+				*(*r)->f = 0;
+				*(*r)->w *= -absorbtion;
+				*(*r)->t = 0;
+			}
+			if (p.y > sim->bounds.bottom)
+			{
+				Vec f = Vec(0, sim->bounds.bottom - p.y);
+				*(*r)->x += f;
+				*(*r)->v *= -absorbtion;
+				*(*r)->f = 0;
+				*(*r)->w *= -absorbtion;
+				*(*r)->t = 0;
+			}
+			if (p.y < sim->bounds.top)
+			{
+				Vec f = Vec(0, sim->bounds.top - p.y);
+				*(*r)->x += f;
+				*(*r)->v *= -absorbtion;
+				*(*r)->f = 0;
+				*(*r)->w *= -absorbtion;
+				*(*r)->t = 0;
+			}
+		}
+	}
 }
 
 //------------------------------------------------------------------------------
 
-bool collides(const Quad &q, const ParticleBase &p)
+Vec getCenter(Quad &q) { return q.center(); }
+Vec getCenter(RigidBase &r) { return *r.x; }
+
+Vec getVel(Quad &q, Vec x) { return q.velocity(); }
+Vec getVel(RigidBase &r, Vec x)
 {
-	unit c1 = (*q.p2->x - *q.p1->x) * (*p.x - *q.p1->x);
-	unit c2 = (*q.p3->x - *q.p2->x) * (*p.x - *q.p2->x);
-	unit c3 = (*q.p4->x - *q.p3->x) * (*p.x - *q.p3->x);
-	unit c4 = (*q.p1->x - *q.p4->x) * (*p.x - *q.p4->x);
-	//if (!c1 || !c2 || !c3 || !c4)
-	//	return true;
+	return *r.v + (Vec::fromAngle(*r.w) & (x - *r.x));
+}
+
+void setForce(Quad &q, Vec f, Vec x)
+{
+	*q.p1->v = f;
+	*q.p2->v = f;
+	*q.p3->v = f;
+	*q.p4->v = f;
+}
+void setForce(RigidBase &r, Vec f, Vec x)
+{
+	*r.v = f;
+	*r.w = (x - *r.x) & f;
+}
+
+void correctPos(Quad &q, Vec v)
+{
+	*q.p1->x += v;
+	*q.p2->x += v;
+	*q.p3->x += v;
+	*q.p4->x += v;
+}
+void correctPos(RigidBase &r, Vec v)
+{
+	*r.v -= v;
+	*r.x -= v;
+}
+
+template <typename T, typename U>
+void collide(Collisions &col, T &a, U &b)
+{
+	const unit absorbtion = 0.6;
+	const unit rest = 0.2;
+	std::pair<Vec,unit> overlap = SAT(a, b);
+	if (overlap.second <= 0.0) return;
 	
-	int c = 0;
-	c += (c1 < 0) ? -1 : 1;
-	c += (c2 < 0) ? -1 : 1;
-	c += (c3 < 0) ? -1 : 1;
-	c += (c4 < 0) ? -1 : 1;
-	return (c == 4) || (c == -4);
-}
-
-inline Vec project(Vec u, Vec v, Vec p)
-{
-	Vec uv = v - u;
-	unit t = (uv * (p - u)) / uv.length2();
-	if (t > 1.0) t = 1.0;
-	if (t < 0.0) t = 0.0;
-	return u + t * uv;
-}
-
-Vec closest(const Quad &q, const ParticleBase &p)
-{
-	Vec p1 = project(*q.p1->x, *q.p2->x, *p.x);
-	Vec p2 = project(*q.p2->x, *q.p3->x, *p.x);
-	Vec p3 = project(*q.p3->x, *q.p4->x, *p.x);
-	Vec p4 = project(*q.p4->x, *q.p1->x, *p.x);
-	unit d1 = (*p.x - p1).length2();
-	unit d2 = (*p.x - p2).length2();
-	unit d3 = (*p.x - p3).length2();
-	unit d4 = (*p.x - p4).length2();
-	if (d1 <= d2 && d1 <= d3 && d1 <= d4) return p1;
-	if (d2 <= d1 && d2 <= d3 && d2 <= d4) return p2;
-	if (d3 <= d1 && d3 <= d2 && d3 <= d4) return p3;
-	if (d4 <= d1 && d4 <= d2 && d4 <= d3) return p4;
-	return p1;
+	Vec n = overlap.first;
+	unit d = overlap.second;
+	Vec x = n * d * 0.5;
+	Vec n1 = getCenter(b) - getCenter(a);
+	Vec n2 = getCenter(a) - getCenter(b);
+	Vec v1 = getVel(a, x);
+	Vec v2 = getVel(b, x);
+	Vec f1 = (-v1 * (1.0 - rest) + ((n1 * v2) >= 0.0 ? -v2 : v2) * rest) * absorbtion;
+	Vec f2 = (-v2 * (1.0 - rest) + ((n2 * v1) >= 0.0 ? -v1 : v1) * rest) * absorbtion;
+	Vec pv = n * d * 0.2;
+	if (d*d > 0.00001)
+	{
+		correctPos(a, -pv);
+		correctPos(b, pv);
+	}
+	setForce(a, f1, -x);
+	setForce(b, f2, x);
 }
 
 void Collisions::apply()
 {
+	for (Quad **q1 = sim->getQuads(); *q1; ++q1)
+		for (Quad **q2 = q1 + 1; *q2; ++q2)
+			collide(*this, **q1, **q2);
 	for (Quad **q = sim->getQuads(); *q; ++q)
-	{
-		for (ParticleBase **p = sim->getParticles(); *p; ++p)
-		{
-			if (*p == (*q)->p1 || *p == (*q)->p2
-			|| *p == (*q)->p3 || *p == (*q)->p4)
-				continue;
-			
-			if (collides(**q, **p))
-			{
-				Vec pc = closest(**q, **p);
-				Vec n = ~(*(**p).x - pc);
-				Vec v = *(**p).v;
-				if (v * n < 0)
-					continue;
-				*(**p).x = pc;
-				*(**q).p1->v += *(**p).v / 4.0;
-				*(**q).p2->v += *(**p).v / 4.0;
-				*(**q).p3->v += *(**p).v / 4.0;
-				*(**q).p4->v += *(**p).v / 4.0;
-				*(**p).v = 0.0;//(v - 2.0 * (v * n) * n);
-				*(**p).f = 0.0;
-			}
-		}
-	}
+		for (RigidBase **r = sim->getRigids(); *r; ++r)
+			collide(*this, **q, **r);
+	for (RigidBase **r1 = sim->getRigids(); *r1; ++r1)
+		for (RigidBase **r2 = r1 + 1; *r2; ++r2)
+			collide(*this, **r1, **r2);
 }
 
 //------------------------------------------------------------------------------

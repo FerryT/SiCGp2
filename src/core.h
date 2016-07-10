@@ -109,6 +109,17 @@ public:
 	ParticleBase *p1, *p2, *p3, *p4;
 	Quad(ParticleBase *_p1, ParticleBase *_p2, ParticleBase *_p3, ParticleBase *_p4)
 		: p1(_p1), p2(_p2), p3(_p3), p4(_p4) {}
+	
+	bool collides(const Vec &p) const;
+	Vec closest(const Vec &p) const;
+	//Vec project(const Vec &v) const;
+	//std::pair<Vec,unit> penetration(const Quad &q) const; // Penetration vector
+	Vec center() const
+		{ return (*p1->x + *p2->x + *p3->x + *p4->x) / 4.0; }
+	Vec velocity() const
+		{ return (*p1->v + *p2->v + *p3->v + *p4->v) / 4.0; }
+	unit mass() const
+		{ return (*p1->m + *p2->m + *p3->m + *p4->m) / 4.0; }
 };
 
 //------------------------------------------------------------------------------
