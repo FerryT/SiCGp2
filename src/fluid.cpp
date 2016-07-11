@@ -309,10 +309,10 @@ void couple(Fluid &fluid, unit dt)
 				q2 = 1.0 - (q2 / qs);
 				q3 = 1.0 - (q3 / qs);
 				q4 = 1.0 - (q4 / qs);
-				*q->p1->f += (pv - *q->p1->v) * d * q1;
-				*q->p2->f += (pv - *q->p2->v) * d * q2;
-				*q->p3->f += (pv - *q->p3->v) * d * q3;
-				*q->p4->f += (pv - *q->p4->v) * d * q4;
+				*q->p1->f -= (pv - *q->p1->v) * d * q1 / 25.0;
+				*q->p2->f -= (pv - *q->p2->v) * d * q2 / 25.0;
+				*q->p3->f -= (pv - *q->p3->v) * d * q3 / 25.0;
+				*q->p4->f -= (pv - *q->p4->v) * d * q4 / 25.0;
 			}
 			else if (r)
 			{

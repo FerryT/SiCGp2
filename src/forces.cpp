@@ -105,8 +105,9 @@ std::pair<Vec,unit> SAT(const T &a, const U &b)
 
 void Gravity::draw()
 {
-	Vec pos = origin + g;
-	Vec arrow = (g + g.rotL()) / 4.0;
+	Vec g2 = g * 0.02;
+	Vec pos = origin + g2;
+	Vec arrow = (g2 + g2.rotL()) / 4.0;
 	glBegin(GL_LINES);
 	glColor3f(0.8, 0.7, 0.6);
 	glVertex2dv(origin.data);

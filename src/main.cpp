@@ -67,7 +67,7 @@ public:
 	friend class MouseSpring;
 
 protected:
-	int scene = 5;
+	int scene = 1;
 	struct { int x, y, dx, dy; int down; } mouse;
 };
 
@@ -107,6 +107,28 @@ int main(int argc, char *argv[])
 {
 	GUI::Init(&argc, argv);
 	{
+		puts(
+			"Fluid and rigid body simulation\n"
+			"\tby Ferry Timmers and Henk Alkema, Summer 2016\n"
+			"\n"
+			"Contains 5 demo scenes (press number 1 to 5 to switch)"
+			"\n"
+			"Keys:\n"
+			"\t1-5\tSwitch between scenes\n"
+			"\tV\tToggle velocity visualisation mode\n"
+			"\tH\tToggle high-density mode\n"
+			"\t\t(increases particles and fluid cells, but is slow)\n"
+			"\tG\tToggle gravity\n"
+			"\tT\tEnable/disable textures\n"
+			"\tR/F5\tReset scene\n"
+			"\tQ/Esc\tQuit the program\n"
+			"\n"
+			"Mouse:\n"
+			"\tLeft:\t\tDrag fluid velocity or particles / rigid bodies.\n"
+			"\tRight:\t\tAdd fluid.\n"
+			"\tLeft + right:\tRemove fluid.\n"
+		);
+		
 		Main sim("Fluid yet rigid");
 		Verlet verlet(sim);
 		Euler euler(sim);
@@ -137,7 +159,7 @@ template <> void Main::gotoScene<1>()
 	
 	Vec G(0, -10.0); G *= gravity;
 	int hd = HD ? 2 : 1;
-	fluid = create<Fluid>(this, 80 * hd, 60 * hd, 0.0001, 0.000001, G);
+	fluid = create<Fluid>(this, 80 * hd, 60 * hd, 0.0001, 0.000001, G, 5.0);
 }
 
 template <> void Main::gotoScene<2>()
@@ -147,10 +169,10 @@ template <> void Main::gotoScene<2>()
 	
 	Vec G(0, -1.0); G *= gravity;
 	int hd = HD ? 2 : 1;
-	fluid = create<Fluid>(this, 80 * hd, 60 * hd, 0.0001, 0.000001, G);
+	fluid = create<Fluid>(this, 80 * hd, 60 * hd, 0.0001, 0.000001, G, 10.0);
 	createCloth(this, 0.25, 0.25, .5, .5, 5 * hd, 5 * hd, -1000, -100,
 		skin ? t1 : NULL);
-	create<Gravity>(this, G, 0.0);
+	create<Gravity>(this, G);
 }
 
 template <> void Main::gotoScene<3>()
@@ -159,12 +181,13 @@ template <> void Main::gotoScene<3>()
 		"LMB/RMB: as before\tMMB: manipulate box\n";
 	Vec G(0, -10.0); G *= gravity;
 	int hd = HD ? 2 : 1;
-	fluid = create<Fluid>(this, 80 * hd, 60 * hd, 0.0001, 0.000001, G);
+	fluid = create<Fluid>(this, 80 * hd, 60 * hd, 0.0001, 0.000001, G, 10.0);
 	createBox(this, 0.4, 0.5, 0.2, 0.2, skin ? t2 : NULL);
 	createBox(this, 0.3, 0.75, 0.2, 0.2, skin ? t2 : NULL);
 	createBox(this, 0.75, 0.3, 0.2, 0.2, skin ? t2 : NULL);
 	create<Collisions>(this);
 	create<Borders>(this);
+	create<Gravity>(this, G);
 }
 
 template <> void Main::gotoScene<4>()
@@ -172,17 +195,17 @@ template <> void Main::gotoScene<4>()
 	std::cout << "[Scene 4] Water slide\n";
 	Vec G(0, -1.0); G *= gravity;
 	int hd = HD ? 2 : 1;
-	fluid = create<Fluid>(this, 80 * hd, 60 * hd, 0.0001, 0.000001, G, 1.0);
+	fluid = create<Fluid>(this, 80 * hd, 60 * hd, 0.0001, 0.000001, G, 2.0);
 	createRibbon(this, 0.3, 0.7, 1.0, 0.9, 0.05, 6);
 	createRibbon(this, -0.1, 0.8, 0.3, 0.5, 0.05, 5);
 	createRibbon(this, 0.2, 0.4, 0.4, 0.4, 0.1, 4);
 	createRibbon(this, -0.1, 0.3, 0.9, 0.2, 0.1, 10);
-	create<Gravity>(this, G, 0.0);
+	create<Gravity>(this, G);
 }
 
 template <> void Main::gotoScene<5>()
 {
-	std::cout << "[Scene 5] Collisions\n";
+	std::cout << "[Scene 5] Rigid bodies interaction\n";
 	Vec G(0, -10.0); G *= gravity;
 	int hd = HD ? 2 : 1;
 	fluid = create<Fluid>(this, 80 * hd, 60 * hd, 0.0001, 0.000001, G, 10.0);
@@ -195,13 +218,6 @@ template <> void Main::gotoScene<5>()
 	create<Borders>(this);
 	create<Collisions>(this);
 	create<Gravity>(this, G, 0.0);
-	/** /
-	ParticleBase *p1 = addParticle(Vec(0.4, 0.7));
-	ParticleBase *p2 = addParticle(Vec(0.5, 0.5));
-	create<Glue>(p2, *p2->x);
-	create<RigidForce>(rb, p1);
-	create<Spring>(p1, p2, 0.223, -1000.0, -300.0);
-	/**/
 }
 
 //------------------------------------------------------------------------------
@@ -368,10 +384,7 @@ void Main::preact()
 			else
 				fluid->mouse.d = 1000.0 * hd;
 			if (scene == 2)
-			{
 				fluid->mouse.v += Vec(3000.0 * hd, 0.0);
-				fluid->mouse.d *= 10.0;
-			}
 		}
 	}
 }
